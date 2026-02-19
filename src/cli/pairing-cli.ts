@@ -4,6 +4,7 @@ import { listPairingChannels, notifyPairingApproved } from "../channels/plugins/
 import { loadConfig } from "../config/config.js";
 import { resolvePairingIdLabel } from "../pairing/pairing-labels.js";
 import {
+  addChannelAllowFromStoreEntry,
   approveChannelPairingCode,
   listChannelPairingRequests,
   type PairingChannel,
@@ -108,6 +109,43 @@ export function registerPairingCli(program: Command) {
             Requested: r.createdAt,
           })),
         }).trimEnd(),
+      );
+    });
+
+  pairing
+    .command("allow")
+    .description("Allow a sender/contact directly (without pairing code)")
+    .option("--channel <channel>", `Channel (${channels.join(", ")})`)
+    .option("--account <accountId>", "Account id (for multi-account channels)")
+    .argument("<idOrChannel>", "Sender/contact id (or channel when using 2 args)")
+    .argument("[id]", "Sender/contact id (when channel is passed as the 1st arg)")
+    .action(async (idOrChannel, id, opts) => {
+      const channelRaw = opts.channel ?? idOrChannel;
+      const resolvedId = opts.channel ? idOrChannel : id;
+      if (!opts.channel && !id) {
+        throw new Error(
+          `Usage: ${formatCliCommand("medha pairing allow <channel> <contactId>")} (or: ${formatCliCommand("medha pairing allow --channel <channel> <contactId>")})`,
+        );
+      }
+      if (opts.channel && id != null) {
+        throw new Error(
+          `Too many arguments. Use: ${formatCliCommand("medha pairing allow --channel <channel> <contactId>")}`,
+        );
+      }
+      const channel = parseChannel(channelRaw, channels);
+      const contactId = String(resolvedId).trim();
+      if (!contactId) {
+        throw new Error("contactId is required");
+      }
+      const accountId = String(opts.account ?? "").trim();
+      const result = await addChannelAllowFromStoreEntry({
+        channel,
+        entry: contactId,
+        accountId: accountId || undefined,
+      });
+      const status = result.added ? "Added" : "Already allowed";
+      defaultRuntime.log(
+        `${theme.success(status)} ${theme.muted(channel)} sender ${theme.command(contactId)}.`,
       );
     });
 

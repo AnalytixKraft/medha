@@ -556,7 +556,11 @@ export async function compactEmbeddedPiSessionDirect(
         authStorage,
         modelRegistry,
         model,
-        thinkingLevel: mapThinkingLevel(params.thinkLevel),
+        thinkingLevel: mapThinkingLevel({
+          level: params.thinkLevel,
+          provider,
+          modelId,
+        }),
         tools: builtInTools,
         customTools,
         sessionManager,

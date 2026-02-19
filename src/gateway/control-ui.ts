@@ -172,6 +172,122 @@ function serveIndexHtml(res: ServerResponse, indexPath: string) {
   res.end(fs.readFileSync(indexPath, "utf8"));
 }
 
+function renderFallbackControlUiHtml(basePath: string): string {
+  const homeHref = basePath ? `${basePath}/` : "/";
+  const pairingHref = basePath ? `${basePath}/pairing-contact` : "/pairing-contact";
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Medha Control</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0f172a;
+        color: #e2e8f0;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 40px auto;
+        padding: 20px;
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 16px;
+      }
+      .card {
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 20px;
+        background: #111827;
+      }
+      .menu {
+        padding: 14px;
+      }
+      .menu h2 {
+        margin: 0 0 10px 0;
+        font-size: 0.9rem;
+        color: #94a3b8;
+      }
+      .menu-item {
+        display: block;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        padding: 10px 12px;
+        text-decoration: none;
+        color: #cbd5e1;
+        margin-bottom: 8px;
+      }
+      .menu-item.active {
+        background: #1f2937;
+        color: #e2e8f0;
+      }
+      a {
+        color: #93c5fd;
+      }
+      .muted {
+        color: #94a3b8;
+      }
+      code {
+        color: #cbd5e1;
+      }
+      @media (max-width: 820px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="shell">
+        <nav class="card menu" aria-label="Main menu">
+          <h2>Menu</h2>
+          <a class="menu-item active" href="${homeHref}">Dashboard</a>
+          <a class="menu-item" data-preserve-hash="1" href="${pairingHref}">Pair Contact</a>
+        </nav>
+        <div class="card">
+          <h1>Medha Control</h1>
+          <p class="muted">Control UI assets are currently unavailable, so fallback mode is active.</p>
+          <p>Use <a data-preserve-hash="1" href="${pairingHref}">Pair Contact</a> from the menu to approve pairing codes or manually add contacts.</p>
+          <p>Need a tokenized URL? Run: <code>medha dashboard --no-open</code></p>
+        </div>
+      </div>
+    </div>
+    <script>
+      (function preserveHashForLinks() {
+        try {
+          const hash = window.location.hash || "";
+          if (!hash) {
+            return;
+          }
+          const links = document.querySelectorAll("a[data-preserve-hash='1']");
+          for (const link of links) {
+            const currentHref = link.getAttribute("href");
+            if (!currentHref || currentHref.includes("#")) {
+              continue;
+            }
+            link.setAttribute("href", currentHref + hash);
+          }
+        } catch {
+          // best-effort
+        }
+      })();
+    </script>
+  </body>
+</html>`;
+}
+
+function serveFallbackControlUi(res: ServerResponse, basePath: string) {
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+  res.end(renderFallbackControlUiHtml(basePath));
+}
+
 function isSafeRelativePath(relPath: string) {
   if (!relPath) {
     return false;
@@ -260,19 +376,11 @@ export function handleControlUiHttpRequest(
 
   const rootState = opts?.root;
   if (rootState?.kind === "invalid") {
-    res.statusCode = 503;
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.end(
-      `Control UI assets not found at ${rootState.path}. Build them with \`pnpm ui:build\` (auto-installs UI deps), or update gateway.controlUi.root.`,
-    );
+    serveFallbackControlUi(res, basePath);
     return true;
   }
   if (rootState?.kind === "missing") {
-    res.statusCode = 503;
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.end(
-      "Control UI assets not found. Build them with `pnpm ui:build` (auto-installs UI deps), or run `pnpm ui:dev` during development.",
-    );
+    serveFallbackControlUi(res, basePath);
     return true;
   }
 
@@ -285,11 +393,7 @@ export function handleControlUiHttpRequest(
           cwd: process.cwd(),
         });
   if (!root) {
-    res.statusCode = 503;
-    res.setHeader("Content-Type", "text/plain; charset=utf-8");
-    res.end(
-      "Control UI assets not found. Build them with `pnpm ui:build` (auto-installs UI deps), or run `pnpm ui:dev` during development.",
-    );
+    serveFallbackControlUi(res, basePath);
     return true;
   }
 

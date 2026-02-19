@@ -38,6 +38,10 @@ describe("normalizeThinkLevel", () => {
   it("accepts on as low", () => {
     expect(normalizeThinkLevel("on")).toBe("low");
   });
+
+  it("accepts none as off", () => {
+    expect(normalizeThinkLevel("none")).toBe("off");
+  });
 });
 
 describe("listThinkingLevels", () => {
