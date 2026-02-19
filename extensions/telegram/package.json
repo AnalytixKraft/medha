@@ -1,13 +1,13 @@
 {
-  "name": "@openclaw/telegram",
+  "name": "@medha/telegram",
   "version": "2026.2.18",
   "private": true,
-  "description": "OpenClaw Telegram channel plugin",
+  "description": "Medha Telegram channel plugin",
   "type": "module",
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "medha": "workspace:*"
   },
-  "openclaw": {
+  "medha": {
     "extensions": [
       "./index.ts"
     ]

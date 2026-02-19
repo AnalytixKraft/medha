@@ -1,5 +1,5 @@
-import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
-import { emptyPluginConfigSchema } from "openclaw/plugin-sdk";
+import type { MedhaPluginApi } from "medha/plugin-sdk";
+import { emptyPluginConfigSchema } from "medha/plugin-sdk";
 import { msteamsPlugin } from "./src/channel.js";
 import { setMSTeamsRuntime } from "./src/runtime.js";
 
@@ -8,7 +8,7 @@ const plugin = {
   name: "Microsoft Teams",
   description: "Microsoft Teams channel plugin (Bot Framework)",
   configSchema: emptyPluginConfigSchema(),
-  register(api: OpenClawPluginApi) {
+  register(api: MedhaPluginApi) {
     setMSTeamsRuntime(api.runtime);
     api.registerChannel({ plugin: msteamsPlugin });
   },

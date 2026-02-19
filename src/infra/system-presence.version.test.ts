@@ -17,10 +17,10 @@ async function withPresenceModule<T>(
 }
 
 describe("system-presence version fallback", () => {
-  it("uses OPENCLAW_SERVICE_VERSION when OPENCLAW_VERSION is not set", async () => {
+  it("uses MEDHA_SERVICE_VERSION when MEDHA_VERSION is not set", async () => {
     await withPresenceModule(
       {
-        OPENCLAW_SERVICE_VERSION: "2.4.6-service",
+        MEDHA_SERVICE_VERSION: "2.4.6-service",
         npm_package_version: "1.0.0-package",
       },
       ({ listSystemPresence }) => {
@@ -30,11 +30,11 @@ describe("system-presence version fallback", () => {
     );
   });
 
-  it("prefers OPENCLAW_VERSION over OPENCLAW_SERVICE_VERSION", async () => {
+  it("prefers MEDHA_VERSION over MEDHA_SERVICE_VERSION", async () => {
     await withPresenceModule(
       {
-        OPENCLAW_VERSION: "9.9.9-cli",
-        OPENCLAW_SERVICE_VERSION: "2.4.6-service",
+        MEDHA_VERSION: "9.9.9-cli",
+        MEDHA_SERVICE_VERSION: "2.4.6-service",
         npm_package_version: "1.0.0-package",
       },
       ({ listSystemPresence }) => {
@@ -44,11 +44,11 @@ describe("system-presence version fallback", () => {
     );
   });
 
-  it("uses npm_package_version when OPENCLAW_VERSION and OPENCLAW_SERVICE_VERSION are blank", async () => {
+  it("uses npm_package_version when MEDHA_VERSION and MEDHA_SERVICE_VERSION are blank", async () => {
     await withPresenceModule(
       {
-        OPENCLAW_VERSION: " ",
-        OPENCLAW_SERVICE_VERSION: "\t",
+        MEDHA_VERSION: " ",
+        MEDHA_SERVICE_VERSION: "\t",
         npm_package_version: "1.0.0-package",
       },
       ({ listSystemPresence }) => {

@@ -133,7 +133,7 @@ describe("cli program (nodes media)", () => {
     );
 
     await expectLoggedSingleMediaFile({
-      expectedPathPattern: /openclaw-camera-clip-front-.*\.mp4$/,
+      expectedPathPattern: /medha-camera-clip-front-.*\.mp4$/,
     });
   });
 
@@ -268,7 +268,7 @@ describe("cli program (nodes media)", () => {
     );
 
     await expectLoggedSingleMediaFile({
-      expectedPathPattern: /openclaw-canvas-snapshot-.*\.png$/,
+      expectedPathPattern: /medha-canvas-snapshot-.*\.png$/,
     });
   });
 
@@ -323,7 +323,7 @@ describe("cli program (nodes media)", () => {
       );
 
       await expectLoggedSingleMediaFile({
-        expectedPathPattern: /openclaw-camera-snap-front-.*\.jpg$/,
+        expectedPathPattern: /medha-camera-snap-front-.*\.jpg$/,
         expectedContent: "url-content",
       });
     });
@@ -344,7 +344,7 @@ describe("cli program (nodes media)", () => {
       );
 
       await expectLoggedSingleMediaFile({
-        expectedPathPattern: /openclaw-camera-clip-front-.*\.mp4$/,
+        expectedPathPattern: /medha-camera-clip-front-.*\.mp4$/,
         expectedContent: "url-content",
       });
     });

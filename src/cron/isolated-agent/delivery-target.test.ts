@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_CHAT_CHANNEL } from "../../channels/registry.js";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { MedhaConfig } from "../../config/config.js";
 
 vi.mock("../../config/sessions.js", () => ({
   loadSessionStore: vi.fn().mockReturnValue({}),
@@ -16,12 +16,12 @@ import { loadSessionStore } from "../../config/sessions.js";
 import { resolveMessageChannelSelection } from "../../infra/outbound/channel-selection.js";
 import { resolveDeliveryTarget } from "./delivery-target.js";
 
-function makeCfg(overrides?: Partial<OpenClawConfig>): OpenClawConfig {
+function makeCfg(overrides?: Partial<MedhaConfig>): MedhaConfig {
   return {
     bindings: [],
     channels: {},
     ...overrides,
-  } as OpenClawConfig;
+  } as MedhaConfig;
 }
 
 const AGENT_ID = "agent-b";
@@ -38,7 +38,7 @@ function setMainSessionEntry(entry?: SessionStore[string]) {
 }
 
 async function resolveForAgent(params: {
-  cfg: OpenClawConfig;
+  cfg: MedhaConfig;
   target?: { channel?: "last" | "telegram"; to?: string };
 }) {
   const channel = params.target ? params.target.channel : DEFAULT_TARGET.channel;

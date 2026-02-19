@@ -272,14 +272,14 @@ describe("buildServiceEnvironment", () => {
     } else {
       expect(env.PATH).toContain("/usr/bin");
     }
-    expect(env.OPENCLAW_GATEWAY_PORT).toBe("18789");
-    expect(env.OPENCLAW_GATEWAY_TOKEN).toBe("secret");
-    expect(env.OPENCLAW_SERVICE_MARKER).toBe("openclaw");
-    expect(env.OPENCLAW_SERVICE_KIND).toBe("gateway");
-    expect(typeof env.OPENCLAW_SERVICE_VERSION).toBe("string");
-    expect(env.OPENCLAW_SYSTEMD_UNIT).toBe("openclaw-gateway.service");
+    expect(env.MEDHA_GATEWAY_PORT).toBe("18789");
+    expect(env.MEDHA_GATEWAY_TOKEN).toBe("secret");
+    expect(env.MEDHA_SERVICE_MARKER).toBe("medha");
+    expect(env.MEDHA_SERVICE_KIND).toBe("gateway");
+    expect(typeof env.MEDHA_SERVICE_VERSION).toBe("string");
+    expect(env.MEDHA_SYSTEMD_UNIT).toBe("medha-gateway.service");
     if (process.platform === "darwin") {
-      expect(env.OPENCLAW_LAUNCHD_LABEL).toBe("ai.openclaw.gateway");
+      expect(env.MEDHA_LAUNCHD_LABEL).toBe("ai.medha.gateway");
     }
   });
 
@@ -301,12 +301,12 @@ describe("buildServiceEnvironment", () => {
 
   it("uses profile-specific unit and label", () => {
     const env = buildServiceEnvironment({
-      env: { HOME: "/home/user", OPENCLAW_PROFILE: "work" },
+      env: { HOME: "/home/user", MEDHA_PROFILE: "work" },
       port: 18789,
     });
-    expect(env.OPENCLAW_SYSTEMD_UNIT).toBe("openclaw-gateway-work.service");
+    expect(env.MEDHA_SYSTEMD_UNIT).toBe("medha-gateway-work.service");
     if (process.platform === "darwin") {
-      expect(env.OPENCLAW_LAUNCHD_LABEL).toBe("ai.openclaw.work");
+      expect(env.MEDHA_LAUNCHD_LABEL).toBe("ai.medha.work");
     }
   });
 });
@@ -337,31 +337,31 @@ describe("buildNodeServiceEnvironment", () => {
 describe("resolveGatewayStateDir", () => {
   it("uses the default state dir when no overrides are set", () => {
     const env = { HOME: "/Users/test" };
-    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw"));
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".medha"));
   });
 
   it("appends the profile suffix when set", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_PROFILE: "rescue" };
-    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw-rescue"));
+    const env = { HOME: "/Users/test", MEDHA_PROFILE: "rescue" };
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".medha-rescue"));
   });
 
   it("treats default profiles as the base state dir", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_PROFILE: "Default" };
-    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".openclaw"));
+    const env = { HOME: "/Users/test", MEDHA_PROFILE: "Default" };
+    expect(resolveGatewayStateDir(env)).toBe(path.join("/Users/test", ".medha"));
   });
 
-  it("uses OPENCLAW_STATE_DIR when provided", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_STATE_DIR: "/var/lib/openclaw" };
-    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/var/lib/openclaw"));
+  it("uses MEDHA_STATE_DIR when provided", () => {
+    const env = { HOME: "/Users/test", MEDHA_STATE_DIR: "/var/lib/medha" };
+    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/var/lib/medha"));
   });
 
-  it("expands ~ in OPENCLAW_STATE_DIR", () => {
-    const env = { HOME: "/Users/test", OPENCLAW_STATE_DIR: "~/openclaw-state" };
-    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/Users/test/openclaw-state"));
+  it("expands ~ in MEDHA_STATE_DIR", () => {
+    const env = { HOME: "/Users/test", MEDHA_STATE_DIR: "~/medha-state" };
+    expect(resolveGatewayStateDir(env)).toBe(path.resolve("/Users/test/medha-state"));
   });
 
   it("preserves Windows absolute paths without HOME", () => {
-    const env = { OPENCLAW_STATE_DIR: "C:\\State\\openclaw" };
-    expect(resolveGatewayStateDir(env)).toBe("C:\\State\\openclaw");
+    const env = { MEDHA_STATE_DIR: "C:\\State\\medha" };
+    expect(resolveGatewayStateDir(env)).toBe("C:\\State\\medha");
   });
 });

@@ -72,14 +72,14 @@ export function resolveHookInstallDir(hookId: string, hooksDir?: string): string
   return targetDirResult.path;
 }
 
-async function ensureOpenClawHooks(manifest: HookPackageManifest) {
+async function ensureMedhaHooks(manifest: HookPackageManifest) {
   const hooks = manifest[MANIFEST_KEY]?.hooks;
   if (!Array.isArray(hooks)) {
-    throw new Error("package.json missing openclaw.hooks");
+    throw new Error("package.json missing medha.hooks");
   }
   const list = hooks.map((e) => (typeof e === "string" ? e.trim() : "")).filter(Boolean);
   if (list.length === 0) {
-    throw new Error("package.json openclaw.hooks is empty");
+    throw new Error("package.json medha.hooks is empty");
   }
   return list;
 }
@@ -177,7 +177,7 @@ async function installHookPackageFromDir(params: {
 
   let hookEntries: string[];
   try {
-    hookEntries = await ensureOpenClawHooks(manifest);
+    hookEntries = await ensureMedhaHooks(manifest);
   } catch (err) {
     return { ok: false, error: String(err) };
   }
@@ -325,7 +325,7 @@ export async function installHooksFromArchive(params: {
   }
   const archivePath = archivePathResult.path;
 
-  return await withTempDir("openclaw-hook-", async (tmpDir) => {
+  return await withTempDir("medha-hook-", async (tmpDir) => {
     const extractDir = path.join(tmpDir, "extract");
     await fs.mkdir(extractDir, { recursive: true });
 
@@ -384,7 +384,7 @@ export async function installHooksFromNpmSpec(params: {
     return { ok: false, error: specError };
   }
 
-  return await withTempDir("openclaw-hook-pack-", async (tmpDir) => {
+  return await withTempDir("medha-hook-pack-", async (tmpDir) => {
     logger.info?.(`Downloading ${spec}…`);
     const packedResult = await packNpmSpecToArchive({
       spec,

@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { MedhaConfig } from "../../config/config.js";
 import {
   evaluateSessionFreshness,
   loadSessionStore,
@@ -9,7 +9,7 @@ import {
 } from "../../config/sessions.js";
 
 export function resolveCronSession(params: {
-  cfg: OpenClawConfig;
+  cfg: MedhaConfig;
   sessionKey: string;
   nowMs: number;
   agentId: string;

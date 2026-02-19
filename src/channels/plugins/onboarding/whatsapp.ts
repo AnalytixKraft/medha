@@ -1,7 +1,7 @@
 import path from "node:path";
 import { loginWeb } from "../../../channel-web.js";
 import { formatCliCommand } from "../../../cli/command-format.js";
-import type { OpenClawConfig } from "../../../config/config.js";
+import type { MedhaConfig } from "../../../config/config.js";
 import { mergeWhatsAppConfig } from "../../../config/merge-config.js";
 import type { DmPolicy } from "../../../config/types.js";
 import { DEFAULT_ACCOUNT_ID, normalizeAccountId } from "../../../routing/session-key.js";
@@ -19,19 +19,19 @@ import { mergeAllowFromEntries, promptAccountId } from "./helpers.js";
 
 const channel = "whatsapp" as const;
 
-function setWhatsAppDmPolicy(cfg: OpenClawConfig, dmPolicy: DmPolicy): OpenClawConfig {
+function setWhatsAppDmPolicy(cfg: MedhaConfig, dmPolicy: DmPolicy): MedhaConfig {
   return mergeWhatsAppConfig(cfg, { dmPolicy });
 }
 
-function setWhatsAppAllowFrom(cfg: OpenClawConfig, allowFrom?: string[]): OpenClawConfig {
+function setWhatsAppAllowFrom(cfg: MedhaConfig, allowFrom?: string[]): MedhaConfig {
   return mergeWhatsAppConfig(cfg, { allowFrom }, { unsetOnUndefined: ["allowFrom"] });
 }
 
-function setWhatsAppSelfChatMode(cfg: OpenClawConfig, selfChatMode: boolean): OpenClawConfig {
+function setWhatsAppSelfChatMode(cfg: MedhaConfig, selfChatMode: boolean): MedhaConfig {
   return mergeWhatsAppConfig(cfg, { selfChatMode });
 }
 
-async function detectWhatsAppLinked(cfg: OpenClawConfig, accountId: string): Promise<boolean> {
+async function detectWhatsAppLinked(cfg: MedhaConfig, accountId: string): Promise<boolean> {
   const { authDir } = resolveWhatsAppAuthDir({ cfg, accountId });
   const credsPath = path.join(authDir, "creds.json");
   return await pathExists(credsPath);
@@ -44,7 +44,7 @@ async function promptWhatsAppOwnerAllowFrom(params: {
   const { prompter, existingAllowFrom } = params;
 
   await prompter.note(
-    "We need the sender/owner number so OpenClaw can allowlist you.",
+    "We need the sender/owner number so Medha can allowlist you.",
     "WhatsApp number",
   );
   const entry = await prompter.text({
@@ -80,12 +80,12 @@ async function promptWhatsAppOwnerAllowFrom(params: {
 }
 
 async function applyWhatsAppOwnerAllowlist(params: {
-  cfg: OpenClawConfig;
+  cfg: MedhaConfig;
   prompter: WizardPrompter;
   existingAllowFrom: string[];
   title: string;
   messageLines: string[];
-}): Promise<OpenClawConfig> {
+}): Promise<MedhaConfig> {
   const { normalized, allowFrom } = await promptWhatsAppOwnerAllowFrom({
     prompter: params.prompter,
     existingAllowFrom: params.existingAllowFrom,
@@ -101,11 +101,11 @@ async function applyWhatsAppOwnerAllowlist(params: {
 }
 
 async function promptWhatsAppAllowFrom(
-  cfg: OpenClawConfig,
+  cfg: MedhaConfig,
   _runtime: RuntimeEnv,
   prompter: WizardPrompter,
   options?: { forceAllowlist?: boolean },
-): Promise<OpenClawConfig> {
+): Promise<MedhaConfig> {
   const existingPolicy = cfg.channels?.whatsapp?.dmPolicy ?? "pairing";
   const existingAllowFrom = cfg.channels?.whatsapp?.allowFrom ?? [];
   const existingLabel = existingAllowFrom.length > 0 ? existingAllowFrom.join(", ") : "unset";
@@ -138,7 +138,7 @@ async function promptWhatsAppAllowFrom(
     message: "WhatsApp phone setup",
     options: [
       { value: "personal", label: "This is my personal phone number" },
-      { value: "separate", label: "Separate phone just for OpenClaw" },
+      { value: "separate", label: "Separate phone just for Medha" },
     ],
   });
 
@@ -335,7 +335,7 @@ export const whatsappOnboardingAdapter: ChannelOnboardingAdapter = {
       }
     } else if (!linked) {
       await prompter.note(
-        `Run \`${formatCliCommand("openclaw channels login")}\` later to link WhatsApp.`,
+        `Run \`${formatCliCommand("medha channels login")}\` later to link WhatsApp.`,
         "WhatsApp",
       );
     }

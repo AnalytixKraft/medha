@@ -1,12 +1,12 @@
 {
-  "name": "@openclaw/discord",
+  "name": "@medha/discord",
   "version": "2026.2.18",
-  "description": "OpenClaw Discord channel plugin",
+  "description": "Medha Discord channel plugin",
   "type": "module",
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "medha": "workspace:*"
   },
-  "openclaw": {
+  "medha": {
     "extensions": [
       "./index.ts"
     ]

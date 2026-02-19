@@ -138,7 +138,7 @@ describe("node.invoke APNs wake path", () => {
     mocks.loadApnsRegistration.mockResolvedValue({
       nodeId: "ios-node-reconnect",
       token: "abcd1234abcd1234abcd1234abcd1234",
-      topic: "ai.openclaw.ios",
+      topic: "ai.medha.ios",
       environment: "sandbox",
       updatedAtMs: 1,
     });
@@ -154,7 +154,7 @@ describe("node.invoke APNs wake path", () => {
       ok: true,
       status: 200,
       tokenSuffix: "1234abcd",
-      topic: "ai.openclaw.ios",
+      topic: "ai.medha.ios",
       environment: "sandbox",
     });
 
@@ -203,7 +203,7 @@ describe("node.invoke APNs wake path", () => {
     mocks.loadApnsRegistration.mockResolvedValue({
       nodeId: "ios-node-throttle",
       token: "abcd1234abcd1234abcd1234abcd1234",
-      topic: "ai.openclaw.ios",
+      topic: "ai.medha.ios",
       environment: "sandbox",
       updatedAtMs: 1,
     });
@@ -219,7 +219,7 @@ describe("node.invoke APNs wake path", () => {
       ok: true,
       status: 200,
       tokenSuffix: "1234abcd",
-      topic: "ai.openclaw.ios",
+      topic: "ai.medha.ios",
       environment: "sandbox",
     });
 

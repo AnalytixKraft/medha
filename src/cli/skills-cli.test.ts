@@ -229,10 +229,10 @@ describe("skills-cli", () => {
     let buildWorkspaceSkillStatus: typeof import("../agents/skills-status.js").buildWorkspaceSkillStatus;
 
     beforeAll(async () => {
-      envSnapshot = captureEnv(["OPENCLAW_BUNDLED_SKILLS_DIR"]);
-      tempWorkspaceDir = fs.mkdtempSync(path.join(os.tmpdir(), "openclaw-skills-test-"));
-      tempBundledDir = fs.mkdtempSync(path.join(os.tmpdir(), "openclaw-bundled-skills-test-"));
-      process.env.OPENCLAW_BUNDLED_SKILLS_DIR = tempBundledDir;
+      envSnapshot = captureEnv(["MEDHA_BUNDLED_SKILLS_DIR"]);
+      tempWorkspaceDir = fs.mkdtempSync(path.join(os.tmpdir(), "medha-skills-test-"));
+      tempBundledDir = fs.mkdtempSync(path.join(os.tmpdir(), "medha-bundled-skills-test-"));
+      process.env.MEDHA_BUNDLED_SKILLS_DIR = tempBundledDir;
       ({ buildWorkspaceSkillStatus } = await import("../agents/skills-status.js"));
     });
 
@@ -253,7 +253,7 @@ describe("skills-cli", () => {
           skill: {
             name: "peekaboo",
             description: "Capture UI screenshots",
-            source: "openclaw-bundled",
+            source: "medha-bundled",
             filePath: path.join(baseDir, "SKILL.md"),
             baseDir,
           } as SkillEntry["skill"],

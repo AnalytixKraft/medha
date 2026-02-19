@@ -9,7 +9,7 @@ import {
   resolveInternalSessionKey,
   resolveMainSessionAlias,
 } from "../../agents/tools/sessions-helpers.js";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { MedhaConfig } from "../../config/config.js";
 import type { SessionEntry, SessionScope } from "../../config/sessions.js";
 import { logVerbose } from "../../globals.js";
 import {
@@ -27,7 +27,7 @@ import { getFollowupQueueDepth, resolveQueueSettings } from "./queue.js";
 import { resolveSubagentLabel } from "./subagents-utils.js";
 
 export async function buildStatusReply(params: {
-  cfg: OpenClawConfig;
+  cfg: MedhaConfig;
   command: CommandContext;
   sessionEntry?: SessionEntry;
   sessionKey: string;

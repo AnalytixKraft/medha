@@ -16,11 +16,11 @@ import { createTypingSignaler, resolveTypingMode } from "./typing-mode.js";
 import { createTypingController } from "./typing.js";
 
 describe("matchesMentionWithExplicit", () => {
-  const mentionRegexes = [/\bopenclaw\b/i];
+  const mentionRegexes = [/\bmedha\b/i];
 
   it("checks mentionPatterns even when explicit mention is available", () => {
     const result = matchesMentionWithExplicit({
-      text: "@openclaw hello",
+      text: "@medha hello",
       mentionRegexes,
       explicit: {
         hasAnyMention: true,
@@ -59,7 +59,7 @@ describe("matchesMentionWithExplicit", () => {
 
   it("falls back to regex matching when explicit mention cannot be resolved", () => {
     const result = matchesMentionWithExplicit({
-      text: "openclaw please",
+      text: "medha please",
       mentionRegexes,
       explicit: {
         hasAnyMention: true,
@@ -720,16 +720,16 @@ describe("resolveResponsePrefixTemplate", () => {
 
   it("resolves {identity.name} variable", () => {
     const result = resolveResponsePrefixTemplate("[{identity.name}]", {
-      identityName: "OpenClaw",
+      identityName: "Medha",
     });
-    expect(result).toBe("[OpenClaw]");
+    expect(result).toBe("[Medha]");
   });
 
   it("resolves {identityName} as alias", () => {
     const result = resolveResponsePrefixTemplate("[{identityName}]", {
-      identityName: "OpenClaw",
+      identityName: "Medha",
     });
-    expect(result).toBe("[OpenClaw]");
+    expect(result).toBe("[Medha]");
   });
 
   it("leaves unresolved variables as-is", () => {
@@ -764,13 +764,13 @@ describe("resolveResponsePrefixTemplate", () => {
     const result = resolveResponsePrefixTemplate(
       "[{identity.name}] {provider}/{model} (think:{thinkingLevel})",
       {
-        identityName: "OpenClaw",
+        identityName: "Medha",
         provider: "anthropic",
         model: "claude-opus-4-5",
         thinkingLevel: "high",
       },
     );
-    expect(result).toBe("[OpenClaw] anthropic/claude-opus-4-5 (think:high)");
+    expect(result).toBe("[Medha] anthropic/claude-opus-4-5 (think:high)");
   });
 });
 

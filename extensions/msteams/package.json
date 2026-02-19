@@ -1,7 +1,7 @@
 {
-  "name": "@openclaw/msteams",
+  "name": "@medha/msteams",
   "version": "2026.2.18",
-  "description": "OpenClaw Microsoft Teams channel plugin",
+  "description": "Medha Microsoft Teams channel plugin",
   "type": "module",
   "dependencies": {
     "@microsoft/agents-hosting": "^1.2.3",
@@ -10,9 +10,9 @@
     "express": "^5.2.1"
   },
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "medha": "workspace:*"
   },
-  "openclaw": {
+  "medha": {
     "extensions": [
       "./index.ts"
     ],
@@ -29,7 +29,7 @@
       "order": 60
     },
     "install": {
-      "npmSpec": "@openclaw/msteams",
+      "npmSpec": "@medha/msteams",
       "localPath": "extensions/msteams",
       "defaultChoice": "npm"
     }

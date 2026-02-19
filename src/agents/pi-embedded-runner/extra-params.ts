@@ -1,12 +1,12 @@
 import type { StreamFn } from "@mariozechner/pi-agent-core";
 import type { SimpleStreamOptions } from "@mariozechner/pi-ai";
 import { streamSimple } from "@mariozechner/pi-ai";
-import type { OpenClawConfig } from "../../config/config.js";
+import type { MedhaConfig } from "../../config/config.js";
 import { log } from "./logger.js";
 
 const OPENROUTER_APP_HEADERS: Record<string, string> = {
-  "HTTP-Referer": "https://openclaw.ai",
-  "X-Title": "OpenClaw",
+  "HTTP-Referer": "https://medha.ai",
+  "X-Title": "Medha",
 };
 const ANTHROPIC_CONTEXT_1M_BETA = "context-1m-2025-08-07";
 const ANTHROPIC_1M_MODEL_PREFIXES = ["claude-opus-4", "claude-sonnet-4"] as const;
@@ -22,7 +22,7 @@ const OPENAI_RESPONSES_PROVIDERS = new Set(["openai"]);
  * @internal Exported for testing only
  */
 export function resolveExtraParams(params: {
-  cfg: OpenClawConfig | undefined;
+  cfg: MedhaConfig | undefined;
   provider: string;
   modelId: string;
 }): Record<string, unknown> | undefined {
@@ -232,7 +232,7 @@ function createAnthropicBetaHeadersWrapper(
 
 /**
  * Create a streamFn wrapper that adds OpenRouter app attribution headers.
- * These headers allow OpenClaw to appear on OpenRouter's leaderboard.
+ * These headers allow Medha to appear on OpenRouter's leaderboard.
  */
 function createOpenRouterHeadersWrapper(baseStreamFn: StreamFn | undefined): StreamFn {
   const underlying = baseStreamFn ?? streamSimple;
@@ -287,7 +287,7 @@ function createZaiToolStreamWrapper(
  */
 export function applyExtraParamsToAgent(
   agent: { streamFn?: StreamFn },
-  cfg: OpenClawConfig | undefined,
+  cfg: MedhaConfig | undefined,
   provider: string,
   modelId: string,
   extraParamsOverride?: Record<string, unknown>,

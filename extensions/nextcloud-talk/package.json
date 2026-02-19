@@ -1,12 +1,12 @@
 {
-  "name": "@openclaw/nextcloud-talk",
+  "name": "@medha/nextcloud-talk",
   "version": "2026.2.18",
-  "description": "OpenClaw Nextcloud Talk channel plugin",
+  "description": "Medha Nextcloud Talk channel plugin",
   "type": "module",
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "medha": "workspace:*"
   },
-  "openclaw": {
+  "medha": {
     "extensions": [
       "./index.ts"
     ],
@@ -25,7 +25,7 @@
       "quickstartAllowFrom": true
     },
     "install": {
-      "npmSpec": "@openclaw/nextcloud-talk",
+      "npmSpec": "@medha/nextcloud-talk",
       "localPath": "extensions/nextcloud-talk",
       "defaultChoice": "npm"
     }

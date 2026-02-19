@@ -74,7 +74,7 @@ describe("auditGatewayServiceConfig", () => {
         programArguments: ["/usr/bin/node", "gateway"],
         environment: {
           PATH: "/usr/local/bin:/usr/bin:/bin",
-          OPENCLAW_GATEWAY_TOKEN: "old-token",
+          MEDHA_GATEWAY_TOKEN: "old-token",
         },
       },
     });
@@ -92,7 +92,7 @@ describe("auditGatewayServiceConfig", () => {
         programArguments: ["/usr/bin/node", "gateway"],
         environment: {
           PATH: "/usr/local/bin:/usr/bin:/bin",
-          OPENCLAW_GATEWAY_TOKEN: "new-token",
+          MEDHA_GATEWAY_TOKEN: "new-token",
         },
       },
     });

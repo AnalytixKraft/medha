@@ -18,7 +18,7 @@ vi.mock("../process/exec.js", () => ({
 const tempDirs: string[] = [];
 
 function makeTempDir() {
-  const dir = path.join(os.tmpdir(), `openclaw-plugin-install-${randomUUID()}`);
+  const dir = path.join(os.tmpdir(), `medha-plugin-install-${randomUUID()}`);
   fs.mkdirSync(dir, { recursive: true });
   tempDirs.push(dir);
   return dir;
@@ -59,7 +59,7 @@ function writePluginPackage(params: {
       {
         name: params.name,
         version: params.version,
-        openclaw: { extensions: params.extensions },
+        medha: { extensions: params.extensions },
       },
       null,
       2,
@@ -77,7 +77,7 @@ async function createVoiceCallArchive(params: {
   const pkgDir = path.join(params.workDir, "package");
   writePluginPackage({
     pkgDir,
-    name: "@openclaw/voice-call",
+    name: "@medha/voice-call",
     version: params.version,
     extensions: ["./dist/index.js"],
   });
@@ -146,7 +146,7 @@ async function expectArchiveInstallReservedSegmentRejection(params: {
     JSON.stringify({
       name: params.packageName,
       version: "0.0.1",
-      openclaw: { extensions: ["./dist/index.js"] },
+      medha: { extensions: ["./dist/index.js"] },
     }),
     "utf-8",
   );
@@ -187,7 +187,7 @@ beforeEach(() => {
 });
 
 describe("installPluginFromArchive", () => {
-  it("installs into ~/.openclaw/extensions and uses unscoped id", async () => {
+  it("installs into ~/.medha/extensions and uses unscoped id", async () => {
     const { stateDir, archivePath, extensionsDir } = await setupVoiceCallArchiveInstall({
       outName: "plugin.tgz",
       version: "0.0.1",
@@ -239,9 +239,9 @@ describe("installPluginFromArchive", () => {
     zip.file(
       "package/package.json",
       JSON.stringify({
-        name: "@openclaw/zipper",
+        name: "@medha/zipper",
         version: "0.0.1",
-        openclaw: { extensions: ["./dist/index.js"] },
+        medha: { extensions: ["./dist/index.js"] },
       }),
     );
     zip.file("package/dist/index.js", "export {};");
@@ -314,14 +314,14 @@ describe("installPluginFromArchive", () => {
     });
   });
 
-  it("rejects packages without openclaw.extensions", async () => {
+  it("rejects packages without medha.extensions", async () => {
     const stateDir = makeTempDir();
     const workDir = makeTempDir();
     const pkgDir = path.join(workDir, "package");
     fs.mkdirSync(pkgDir, { recursive: true });
     fs.writeFileSync(
       path.join(pkgDir, "package.json"),
-      JSON.stringify({ name: "@openclaw/nope", version: "0.0.1" }),
+      JSON.stringify({ name: "@medha/nope", version: "0.0.1" }),
       "utf-8",
     );
 
@@ -341,7 +341,7 @@ describe("installPluginFromArchive", () => {
     if (result.ok) {
       return;
     }
-    expect(result.error).toContain("openclaw.extensions");
+    expect(result.error).toContain("medha.extensions");
   });
 
   it("warns when plugin contains dangerous code patterns", async () => {
@@ -352,7 +352,7 @@ describe("installPluginFromArchive", () => {
       JSON.stringify({
         name: "dangerous-plugin",
         version: "1.0.0",
-        openclaw: { extensions: ["index.js"] },
+        medha: { extensions: ["index.js"] },
       }),
     );
     fs.writeFileSync(
@@ -375,7 +375,7 @@ describe("installPluginFromArchive", () => {
       JSON.stringify({
         name: "hidden-entry-plugin",
         version: "1.0.0",
-        openclaw: { extensions: [".hidden/index.js"] },
+        medha: { extensions: [".hidden/index.js"] },
       }),
     );
     fs.writeFileSync(
@@ -402,7 +402,7 @@ describe("installPluginFromArchive", () => {
       JSON.stringify({
         name: "scan-fail-plugin",
         version: "1.0.0",
-        openclaw: { extensions: ["index.js"] },
+        medha: { extensions: ["index.js"] },
       }),
     );
     fs.writeFileSync(path.join(pluginDir, "index.js"), "export {};");
@@ -424,9 +424,9 @@ describe("installPluginFromDir", () => {
     fs.writeFileSync(
       path.join(pluginDir, "package.json"),
       JSON.stringify({
-        name: "@openclaw/test-plugin",
+        name: "@medha/test-plugin",
         version: "0.0.1",
-        openclaw: { extensions: ["./dist/index.js"] },
+        medha: { extensions: ["./dist/index.js"] },
         dependencies: { "left-pad": "1.3.0" },
       }),
       "utf-8",
@@ -469,9 +469,9 @@ describe("installPluginFromNpmSpec", () => {
     fs.writeFileSync(
       path.join(pkgDir, "package.json"),
       JSON.stringify({
-        name: "@openclaw/voice-call",
+        name: "@medha/voice-call",
         version: "0.0.1",
-        openclaw: { extensions: ["./dist/index.js"] },
+        medha: { extensions: ["./dist/index.js"] },
       }),
       "utf-8",
     );
@@ -503,7 +503,7 @@ describe("installPluginFromNpmSpec", () => {
 
     const { installPluginFromNpmSpec } = await import("./install.js");
     const result = await installPluginFromNpmSpec({
-      spec: "@openclaw/voice-call@0.0.1",
+      spec: "@medha/voice-call@0.0.1",
       extensionsDir,
       logger: { info: () => {}, warn: () => {} },
     });
@@ -511,7 +511,7 @@ describe("installPluginFromNpmSpec", () => {
 
     expectSingleNpmPackIgnoreScriptsCall({
       calls: run.mock.calls,
-      expectedSpec: "@openclaw/voice-call@0.0.1",
+      expectedSpec: "@medha/voice-call@0.0.1",
     });
 
     expect(packTmpDir).not.toBe("");

@@ -7,7 +7,7 @@ import { parseSchtasksQuery, readScheduledTaskCommand, resolveTaskScriptPath } f
 describe("schtasks runtime parsing", () => {
   it("parses status and last run info", () => {
     const output = [
-      "TaskName: \\OpenClaw Gateway",
+      "TaskName: \\Medha Gateway",
       "Status: Ready",
       "Last Run Time: 1/8/2026 1:23:45 AM",
       "Last Run Result: 0x0",
@@ -21,7 +21,7 @@ describe("schtasks runtime parsing", () => {
 
   it("parses running status", () => {
     const output = [
-      "TaskName: \\OpenClaw Gateway",
+      "TaskName: \\Medha Gateway",
       "Status: Running",
       "Last Run Time: 1/8/2026 1:23:45 AM",
       "Last Run Result: 0x0",
@@ -35,32 +35,32 @@ describe("schtasks runtime parsing", () => {
 });
 
 describe("resolveTaskScriptPath", () => {
-  it("uses default path when OPENCLAW_PROFILE is unset", () => {
+  it("uses default path when MEDHA_PROFILE is unset", () => {
     const env = { USERPROFILE: "C:\\Users\\test" };
     expect(resolveTaskScriptPath(env)).toBe(
-      path.join("C:\\Users\\test", ".openclaw", "gateway.cmd"),
+      path.join("C:\\Users\\test", ".medha", "gateway.cmd"),
     );
   });
 
-  it("uses profile-specific path when OPENCLAW_PROFILE is set to a custom value", () => {
-    const env = { USERPROFILE: "C:\\Users\\test", OPENCLAW_PROFILE: "jbphoenix" };
+  it("uses profile-specific path when MEDHA_PROFILE is set to a custom value", () => {
+    const env = { USERPROFILE: "C:\\Users\\test", MEDHA_PROFILE: "jbphoenix" };
     expect(resolveTaskScriptPath(env)).toBe(
-      path.join("C:\\Users\\test", ".openclaw-jbphoenix", "gateway.cmd"),
+      path.join("C:\\Users\\test", ".medha-jbphoenix", "gateway.cmd"),
     );
   });
 
-  it("prefers OPENCLAW_STATE_DIR over profile-derived defaults", () => {
+  it("prefers MEDHA_STATE_DIR over profile-derived defaults", () => {
     const env = {
       USERPROFILE: "C:\\Users\\test",
-      OPENCLAW_PROFILE: "rescue",
-      OPENCLAW_STATE_DIR: "C:\\State\\openclaw",
+      MEDHA_PROFILE: "rescue",
+      MEDHA_STATE_DIR: "C:\\State\\medha",
     };
-    expect(resolveTaskScriptPath(env)).toBe(path.join("C:\\State\\openclaw", "gateway.cmd"));
+    expect(resolveTaskScriptPath(env)).toBe(path.join("C:\\State\\medha", "gateway.cmd"));
   });
 
   it("falls back to HOME when USERPROFILE is not set", () => {
-    const env = { HOME: "/home/test", OPENCLAW_PROFILE: "default" };
-    expect(resolveTaskScriptPath(env)).toBe(path.join("/home/test", ".openclaw", "gateway.cmd"));
+    const env = { HOME: "/home/test", MEDHA_PROFILE: "default" };
+    expect(resolveTaskScriptPath(env)).toBe(path.join("/home/test", ".medha", "gateway.cmd"));
   });
 });
 
@@ -74,12 +74,12 @@ describe("readScheduledTaskCommand", () => {
     },
     run: (env: Record<string, string | undefined>) => Promise<void>,
   ) {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "openclaw-schtasks-test-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "medha-schtasks-test-"));
     try {
       const extraEnv = typeof options.env === "function" ? options.env(tmpDir) : options.env;
       const env = {
         USERPROFILE: tmpDir,
-        OPENCLAW_PROFILE: "default",
+        MEDHA_PROFILE: "default",
         ...extraEnv,
       };
       if (options.scriptLines) {
@@ -130,10 +130,10 @@ describe("readScheduledTaskCommand", () => {
       {
         scriptLines: [
           "@echo off",
-          "rem OpenClaw Gateway",
-          "cd /d C:\\Projects\\openclaw",
+          "rem Medha Gateway",
+          "cd /d C:\\Projects\\medha",
           "set NODE_ENV=production",
-          "set OPENCLAW_PORT=18789",
+          "set MEDHA_PORT=18789",
           "node gateway.js --verbose",
         ],
       },
@@ -141,10 +141,10 @@ describe("readScheduledTaskCommand", () => {
         const result = await readScheduledTaskCommand(env);
         expect(result).toEqual({
           programArguments: ["node", "gateway.js", "--verbose"],
-          workingDirectory: "C:\\Projects\\openclaw",
+          workingDirectory: "C:\\Projects\\medha",
           environment: {
             NODE_ENV: "production",
-            OPENCLAW_PORT: "18789",
+            MEDHA_PORT: "18789",
           },
         });
       },
@@ -156,7 +156,7 @@ describe("readScheduledTaskCommand", () => {
       {
         scriptLines: [
           "@echo off",
-          '"C:\\Program Files\\nodejs\\node.exe" C:\\Users\\test\\AppData\\Roaming\\npm\\node_modules\\openclaw\\dist\\index.js gateway --port 18789',
+          '"C:\\Program Files\\nodejs\\node.exe" C:\\Users\\test\\AppData\\Roaming\\npm\\node_modules\\medha\\dist\\index.js gateway --port 18789',
         ],
       },
       async (env) => {
@@ -164,7 +164,7 @@ describe("readScheduledTaskCommand", () => {
         expect(result).toEqual({
           programArguments: [
             "C:\\Program Files\\nodejs\\node.exe",
-            "C:\\Users\\test\\AppData\\Roaming\\npm\\node_modules\\openclaw\\dist\\index.js",
+            "C:\\Users\\test\\AppData\\Roaming\\npm\\node_modules\\medha\\dist\\index.js",
             "gateway",
             "--port",
             "18789",
@@ -179,15 +179,15 @@ describe("readScheduledTaskCommand", () => {
       {
         scriptLines: [
           "@echo off",
-          '"\\\\fileserver\\OpenClaw Share\\node.exe" "\\\\fileserver\\OpenClaw Share\\dist\\index.js" gateway --port 18789',
+          '"\\\\fileserver\\Medha Share\\node.exe" "\\\\fileserver\\Medha Share\\dist\\index.js" gateway --port 18789',
         ],
       },
       async (env) => {
         const result = await readScheduledTaskCommand(env);
         expect(result).toEqual({
           programArguments: [
-            "\\\\fileserver\\OpenClaw Share\\node.exe",
-            "\\\\fileserver\\OpenClaw Share\\dist\\index.js",
+            "\\\\fileserver\\Medha Share\\node.exe",
+            "\\\\fileserver\\Medha Share\\dist\\index.js",
             "gateway",
             "--port",
             "18789",
@@ -197,10 +197,10 @@ describe("readScheduledTaskCommand", () => {
     );
   });
 
-  it("reads script from OPENCLAW_STATE_DIR override", async () => {
+  it("reads script from MEDHA_STATE_DIR override", async () => {
     await withScheduledTaskScript(
       {
-        env: (tmpDir) => ({ OPENCLAW_STATE_DIR: path.join(tmpDir, "custom-state") }),
+        env: (tmpDir) => ({ MEDHA_STATE_DIR: path.join(tmpDir, "custom-state") }),
         scriptLines: ["@echo off", "node gateway.js --from-state-dir"],
       },
       async (env) => {

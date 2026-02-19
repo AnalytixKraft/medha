@@ -78,7 +78,7 @@ type ConnectedTarget = {
   targetInfo: TargetInfo;
 };
 
-const RELAY_AUTH_HEADER = "x-openclaw-relay-token";
+const RELAY_AUTH_HEADER = "x-medha-relay-token";
 
 function headerValue(value: string | string[] | undefined): string | undefined {
   if (!value) {
@@ -148,7 +148,7 @@ const relayAuthByPort = new Map<number, string>();
 
 function resolveGatewayAuthToken(): string | null {
   const envToken =
-    process.env.OPENCLAW_GATEWAY_TOKEN?.trim() || process.env.CLAWDBOT_GATEWAY_TOKEN?.trim();
+    process.env.MEDHA_GATEWAY_TOKEN?.trim() || process.env.CLAWDBOT_GATEWAY_TOKEN?.trim();
   if (envToken) {
     return envToken;
   }
@@ -170,7 +170,7 @@ function deriveDeterministicRelayAuthToken(port: number): string | null {
     return null;
   }
   return createHash("sha256")
-    .update(`openclaw-relay:${port}:`)
+    .update(`medha-relay:${port}:`)
     .update(gatewayToken)
     .digest("base64url");
 }
@@ -188,7 +188,7 @@ function isAddrInUseError(err: unknown): boolean {
   );
 }
 
-async function looksLikeOpenClawRelay(baseUrl: string): Promise<boolean> {
+async function looksLikeMedhaRelay(baseUrl: string): Promise<boolean> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 500);
   try {
@@ -325,9 +325,9 @@ export async function ensureChromeExtensionRelayServer(opts: {
       case "Browser.getVersion":
         return {
           protocolVersion: "1.3",
-          product: "Chrome/OpenClaw-Extension-Relay",
+          product: "Chrome/Medha-Extension-Relay",
           revision: "0",
-          userAgent: "OpenClaw-Extension-Relay",
+          userAgent: "Medha-Extension-Relay",
           jsVersion: "V8",
         };
       case "Browser.setDownloadBehavior":
@@ -429,7 +429,7 @@ export async function ensureChromeExtensionRelayServer(opts: {
       (req.method === "GET" || req.method === "PUT")
     ) {
       const payload: Record<string, unknown> = {
-        Browser: "OpenClaw/extension-relay",
+        Browser: "Medha/extension-relay",
         "Protocol-Version": "1.3",
       };
       // Only advertise the WS URL if a real extension is connected.
@@ -770,7 +770,7 @@ export async function ensureChromeExtensionRelayServer(opts: {
       server.once("error", reject);
     });
   } catch (err) {
-    if (isAddrInUseError(err) && (await looksLikeOpenClawRelay(info.baseUrl))) {
+    if (isAddrInUseError(err) && (await looksLikeMedhaRelay(info.baseUrl))) {
       const existingRelay: ChromeExtensionRelayServer = {
         host: info.host,
         port: info.port,

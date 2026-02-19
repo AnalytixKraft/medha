@@ -1,6 +1,6 @@
-import { type OpenClawConfig, loadConfig } from "../config/config.js";
-import { resolveOpenClawAgentDir } from "./agent-paths.js";
-import { ensureOpenClawModelsJson } from "./models-config.js";
+import { type MedhaConfig, loadConfig } from "../config/config.js";
+import { resolveMedhaAgentDir } from "./agent-paths.js";
+import { ensureMedhaModelsJson } from "./models-config.js";
 
 export type ModelCatalogEntry = {
   id: string;
@@ -76,7 +76,7 @@ function createAuthStorage(AuthStorageLike: unknown, path: string) {
 }
 
 export async function loadModelCatalog(params?: {
-  config?: OpenClawConfig;
+  config?: MedhaConfig;
   useCache?: boolean;
 }): Promise<ModelCatalogEntry[]> {
   if (params?.useCache === false) {
@@ -98,16 +98,16 @@ export async function loadModelCatalog(params?: {
       });
     try {
       const cfg = params?.config ?? loadConfig();
-      await ensureOpenClawModelsJson(cfg);
+      await ensureMedhaModelsJson(cfg);
       await (
         await import("./pi-auth-json.js")
-      ).ensurePiAuthJsonFromAuthProfiles(resolveOpenClawAgentDir());
+      ).ensurePiAuthJsonFromAuthProfiles(resolveMedhaAgentDir());
       // IMPORTANT: keep the dynamic import *inside* the try/catch.
       // If this fails once (e.g. during a pnpm install that temporarily swaps node_modules),
       // we must not poison the cache with a rejected promise (otherwise all channel handlers
       // will keep failing until restart).
       const piSdk = await importPiSdk();
-      const agentDir = resolveOpenClawAgentDir();
+      const agentDir = resolveMedhaAgentDir();
       const { join } = await import("node:path");
       const authStorage = createAuthStorage(piSdk.AuthStorage, join(agentDir, "auth.json"));
       const registry = new (piSdk.ModelRegistry as unknown as {

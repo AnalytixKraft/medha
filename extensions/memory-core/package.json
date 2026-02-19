@@ -1,16 +1,16 @@
 {
-  "name": "@openclaw/memory-core",
+  "name": "@medha/memory-core",
   "version": "2026.2.18",
   "private": true,
-  "description": "OpenClaw core memory search plugin",
+  "description": "Medha core memory search plugin",
   "type": "module",
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "medha": "workspace:*"
   },
   "peerDependencies": {
-    "openclaw": ">=2026.1.26"
+    "medha": ">=2026.1.26"
   },
-  "openclaw": {
+  "medha": {
     "extensions": [
       "./index.ts"
     ]

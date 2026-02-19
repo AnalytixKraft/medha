@@ -1,15 +1,15 @@
 {
-  "name": "@openclaw/zalo",
+  "name": "@medha/zalo",
   "version": "2026.2.18",
-  "description": "OpenClaw Zalo channel plugin",
+  "description": "Medha Zalo channel plugin",
   "type": "module",
   "dependencies": {
     "undici": "7.22.0"
   },
   "devDependencies": {
-    "openclaw": "workspace:*"
+    "medha": "workspace:*"
   },
-  "openclaw": {
+  "medha": {
     "extensions": [
       "./index.ts"
     ],
@@ -27,7 +27,7 @@
       "quickstartAllowFrom": true
     },
     "install": {
-      "npmSpec": "@openclaw/zalo",
+      "npmSpec": "@medha/zalo",
       "localPath": "extensions/zalo",
       "defaultChoice": "npm"
     }

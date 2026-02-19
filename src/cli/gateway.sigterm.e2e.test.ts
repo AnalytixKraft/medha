@@ -79,22 +79,22 @@ describe("gateway SIGTERM", () => {
   });
 
   it("exits 0 on SIGTERM", { timeout: 180_000 }, async () => {
-    const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "openclaw-gateway-test-"));
+    const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), "medha-gateway-test-"));
     const out: string[] = [];
     const err: string[] = [];
 
     const nodeBin = process.execPath;
     const env = {
       ...process.env,
-      OPENCLAW_NO_RESPAWN: "1",
-      OPENCLAW_STATE_DIR: stateDir,
-      OPENCLAW_SKIP_CHANNELS: "1",
-      OPENCLAW_SKIP_GMAIL_WATCHER: "1",
-      OPENCLAW_SKIP_CRON: "1",
-      OPENCLAW_SKIP_BROWSER_CONTROL_SERVER: "1",
-      OPENCLAW_SKIP_CANVAS_HOST: "1",
+      MEDHA_NO_RESPAWN: "1",
+      MEDHA_STATE_DIR: stateDir,
+      MEDHA_SKIP_CHANNELS: "1",
+      MEDHA_SKIP_GMAIL_WATCHER: "1",
+      MEDHA_SKIP_CRON: "1",
+      MEDHA_SKIP_BROWSER_CONTROL_SERVER: "1",
+      MEDHA_SKIP_CANVAS_HOST: "1",
     };
-    const bootstrapPath = path.join(stateDir, "openclaw-entry-bootstrap.mjs");
+    const bootstrapPath = path.join(stateDir, "medha-entry-bootstrap.mjs");
     const runLoopPath = path.resolve("src/cli/gateway-cli/run-loop.ts");
     const runtimePath = path.resolve("src/runtime.ts");
     fs.writeFileSync(

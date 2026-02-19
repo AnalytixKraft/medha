@@ -1,9 +1,9 @@
-import type { OpenClawConfig } from "../config/config.js";
+import type { MedhaConfig } from "../config/config.js";
 
 export function applyOnboardingLocalWorkspaceConfig(
-  baseConfig: OpenClawConfig,
+  baseConfig: MedhaConfig,
   workspaceDir: string,
-): OpenClawConfig {
+): MedhaConfig {
   return {
     ...baseConfig,
     agents: {

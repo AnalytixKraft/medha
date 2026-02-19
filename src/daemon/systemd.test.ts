@@ -61,45 +61,45 @@ describe("systemd runtime parsing", () => {
 });
 
 describe("resolveSystemdUserUnitPath", () => {
-  it("uses default service name when OPENCLAW_PROFILE is unset", () => {
+  it("uses default service name when MEDHA_PROFILE is unset", () => {
     const env = { HOME: "/home/test" };
     expect(resolveSystemdUserUnitPath(env)).toBe(
-      "/home/test/.config/systemd/user/openclaw-gateway.service",
+      "/home/test/.config/systemd/user/medha-gateway.service",
     );
   });
 
-  it("uses profile-specific service name when OPENCLAW_PROFILE is set to a custom value", () => {
-    const env = { HOME: "/home/test", OPENCLAW_PROFILE: "jbphoenix" };
+  it("uses profile-specific service name when MEDHA_PROFILE is set to a custom value", () => {
+    const env = { HOME: "/home/test", MEDHA_PROFILE: "jbphoenix" };
     expect(resolveSystemdUserUnitPath(env)).toBe(
-      "/home/test/.config/systemd/user/openclaw-gateway-jbphoenix.service",
+      "/home/test/.config/systemd/user/medha-gateway-jbphoenix.service",
     );
   });
 
-  it("prefers OPENCLAW_SYSTEMD_UNIT over OPENCLAW_PROFILE", () => {
+  it("prefers MEDHA_SYSTEMD_UNIT over MEDHA_PROFILE", () => {
     const env = {
       HOME: "/home/test",
-      OPENCLAW_PROFILE: "jbphoenix",
-      OPENCLAW_SYSTEMD_UNIT: "custom-unit",
+      MEDHA_PROFILE: "jbphoenix",
+      MEDHA_SYSTEMD_UNIT: "custom-unit",
     };
     expect(resolveSystemdUserUnitPath(env)).toBe(
       "/home/test/.config/systemd/user/custom-unit.service",
     );
   });
 
-  it("handles OPENCLAW_SYSTEMD_UNIT with .service suffix", () => {
+  it("handles MEDHA_SYSTEMD_UNIT with .service suffix", () => {
     const env = {
       HOME: "/home/test",
-      OPENCLAW_SYSTEMD_UNIT: "custom-unit.service",
+      MEDHA_SYSTEMD_UNIT: "custom-unit.service",
     };
     expect(resolveSystemdUserUnitPath(env)).toBe(
       "/home/test/.config/systemd/user/custom-unit.service",
     );
   });
 
-  it("trims whitespace from OPENCLAW_SYSTEMD_UNIT", () => {
+  it("trims whitespace from MEDHA_SYSTEMD_UNIT", () => {
     const env = {
       HOME: "/home/test",
-      OPENCLAW_SYSTEMD_UNIT: "  custom-unit  ",
+      MEDHA_SYSTEMD_UNIT: "  custom-unit  ",
     };
     expect(resolveSystemdUserUnitPath(env)).toBe(
       "/home/test/.config/systemd/user/custom-unit.service",
@@ -109,8 +109,8 @@ describe("resolveSystemdUserUnitPath", () => {
 
 describe("splitArgsPreservingQuotes", () => {
   it("splits on whitespace outside quotes", () => {
-    expect(splitArgsPreservingQuotes('/usr/bin/openclaw gateway start --name "My Bot"')).toEqual([
-      "/usr/bin/openclaw",
+    expect(splitArgsPreservingQuotes('/usr/bin/medha gateway start --name "My Bot"')).toEqual([
+      "/usr/bin/medha",
       "gateway",
       "start",
       "--name",
@@ -120,32 +120,32 @@ describe("splitArgsPreservingQuotes", () => {
 
   it("supports systemd-style backslash escaping", () => {
     expect(
-      splitArgsPreservingQuotes('openclaw --name "My \\"Bot\\"" --foo bar', {
+      splitArgsPreservingQuotes('medha --name "My \\"Bot\\"" --foo bar', {
         escapeMode: "backslash",
       }),
-    ).toEqual(["openclaw", "--name", 'My "Bot"', "--foo", "bar"]);
+    ).toEqual(["medha", "--name", 'My "Bot"', "--foo", "bar"]);
   });
 
   it("supports schtasks-style escaped quotes while preserving other backslashes", () => {
     expect(
-      splitArgsPreservingQuotes('openclaw --path "C:\\\\Program Files\\\\OpenClaw"', {
+      splitArgsPreservingQuotes('medha --path "C:\\\\Program Files\\\\Medha"', {
         escapeMode: "backslash-quote-only",
       }),
-    ).toEqual(["openclaw", "--path", "C:\\\\Program Files\\\\OpenClaw"]);
+    ).toEqual(["medha", "--path", "C:\\\\Program Files\\\\Medha"]);
 
     expect(
-      splitArgsPreservingQuotes('openclaw --label "My \\"Quoted\\" Name"', {
+      splitArgsPreservingQuotes('medha --label "My \\"Quoted\\" Name"', {
         escapeMode: "backslash-quote-only",
       }),
-    ).toEqual(["openclaw", "--label", 'My "Quoted" Name']);
+    ).toEqual(["medha", "--label", 'My "Quoted" Name']);
   });
 });
 
 describe("parseSystemdExecStart", () => {
   it("preserves quoted arguments", () => {
-    const execStart = '/usr/bin/openclaw gateway start --name "My Bot"';
+    const execStart = '/usr/bin/medha gateway start --name "My Bot"';
     expect(parseSystemdExecStart(execStart)).toEqual([
-      "/usr/bin/openclaw",
+      "/usr/bin/medha",
       "gateway",
       "start",
       "--name",
@@ -163,7 +163,7 @@ describe("systemd service control", () => {
     execFileMock
       .mockImplementationOnce((_cmd, _args, _opts, cb) => cb(null, "", ""))
       .mockImplementationOnce((_cmd, args, _opts, cb) => {
-        expect(args).toEqual(["--user", "stop", "openclaw-gateway.service"]);
+        expect(args).toEqual(["--user", "stop", "medha-gateway.service"]);
         cb(null, "", "");
       });
     const write = vi.fn();
@@ -179,13 +179,13 @@ describe("systemd service control", () => {
     execFileMock
       .mockImplementationOnce((_cmd, _args, _opts, cb) => cb(null, "", ""))
       .mockImplementationOnce((_cmd, args, _opts, cb) => {
-        expect(args).toEqual(["--user", "restart", "openclaw-gateway-work.service"]);
+        expect(args).toEqual(["--user", "restart", "medha-gateway-work.service"]);
         cb(null, "", "");
       });
     const write = vi.fn();
     const stdout = { write } as unknown as NodeJS.WritableStream;
 
-    await restartSystemdService({ stdout, env: { OPENCLAW_PROFILE: "work" } });
+    await restartSystemdService({ stdout, env: { MEDHA_PROFILE: "work" } });
 
     expect(write).toHaveBeenCalledTimes(1);
     expect(String(write.mock.calls[0]?.[0])).toContain("Restarted systemd service");

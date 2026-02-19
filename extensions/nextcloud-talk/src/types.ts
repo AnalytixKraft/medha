@@ -3,7 +3,7 @@ import type {
   DmConfig,
   DmPolicy,
   GroupPolicy,
-} from "openclaw/plugin-sdk";
+} from "medha/plugin-sdk";
 
 export type { DmPolicy, GroupPolicy };
 

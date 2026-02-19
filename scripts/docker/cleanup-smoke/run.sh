@@ -3,33 +3,33 @@ set -euo pipefail
 
 cd /repo
 
-export OPENCLAW_STATE_DIR="/tmp/openclaw-test"
-export OPENCLAW_CONFIG_PATH="${OPENCLAW_STATE_DIR}/openclaw.json"
+export MEDHA_STATE_DIR="/tmp/medha-test"
+export MEDHA_CONFIG_PATH="${MEDHA_STATE_DIR}/medha.json"
 
 echo "==> Build"
 pnpm build
 
 echo "==> Seed state"
-mkdir -p "${OPENCLAW_STATE_DIR}/credentials"
-mkdir -p "${OPENCLAW_STATE_DIR}/agents/main/sessions"
-echo '{}' >"${OPENCLAW_CONFIG_PATH}"
-echo 'creds' >"${OPENCLAW_STATE_DIR}/credentials/marker.txt"
-echo 'session' >"${OPENCLAW_STATE_DIR}/agents/main/sessions/sessions.json"
+mkdir -p "${MEDHA_STATE_DIR}/credentials"
+mkdir -p "${MEDHA_STATE_DIR}/agents/main/sessions"
+echo '{}' >"${MEDHA_CONFIG_PATH}"
+echo 'creds' >"${MEDHA_STATE_DIR}/credentials/marker.txt"
+echo 'session' >"${MEDHA_STATE_DIR}/agents/main/sessions/sessions.json"
 
 echo "==> Reset (config+creds+sessions)"
-pnpm openclaw reset --scope config+creds+sessions --yes --non-interactive
+pnpm medha reset --scope config+creds+sessions --yes --non-interactive
 
-test ! -f "${OPENCLAW_CONFIG_PATH}"
-test ! -d "${OPENCLAW_STATE_DIR}/credentials"
-test ! -d "${OPENCLAW_STATE_DIR}/agents/main/sessions"
+test ! -f "${MEDHA_CONFIG_PATH}"
+test ! -d "${MEDHA_STATE_DIR}/credentials"
+test ! -d "${MEDHA_STATE_DIR}/agents/main/sessions"
 
 echo "==> Recreate minimal config"
-mkdir -p "${OPENCLAW_STATE_DIR}/credentials"
-echo '{}' >"${OPENCLAW_CONFIG_PATH}"
+mkdir -p "${MEDHA_STATE_DIR}/credentials"
+echo '{}' >"${MEDHA_CONFIG_PATH}"
 
 echo "==> Uninstall (state only)"
-pnpm openclaw uninstall --state --yes --non-interactive
+pnpm medha uninstall --state --yes --non-interactive
 
-test ! -d "${OPENCLAW_STATE_DIR}"
+test ! -d "${MEDHA_STATE_DIR}"
 
 echo "OK"
