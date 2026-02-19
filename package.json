@@ -14,7 +14,6 @@
     "url": "git+https://github.com/AnalytixKraft/medha.git"
   },
   "bin": {
-    "medha": "medha.mjs",
     "medha": "medha.mjs"
   },
   "files": [
@@ -23,7 +22,6 @@
     "assets/",
     "dist/",
     "extensions/",
-    "medha.mjs",
     "medha.mjs",
     "skills/"
   ],
