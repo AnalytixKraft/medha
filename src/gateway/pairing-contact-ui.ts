@@ -5,6 +5,7 @@ import {
   approveChannelPairingCode,
   listChannelPairingRequests,
   readChannelAllowFromStore,
+  removeChannelAllowFromStoreEntry,
 } from "../pairing/pairing-store.js";
 import type { GatewayAuthResult } from "./auth.js";
 import { buildControlUiCspHeader } from "./control-ui-csp.js";
@@ -323,6 +324,7 @@ function renderPairingContactHtml(paths: PairingContactUiPaths): string {
           <thead>
             <tr>
               <th>Entry</th>
+              <th>Action</th>
             </tr>
           </thead>
           <tbody id="allowBody"></tbody>
@@ -527,11 +529,26 @@ async function loadAllowlist() {
   const allowFrom = Array.isArray(res.allowFrom) ? res.allowFrom : [];
   clearChildren(allowBody);
   if (allowFrom.length === 0) {
-    allowBody.appendChild(row(["No contacts paired yet"]));
+    allowBody.appendChild(row(["No contacts paired yet", "-"]));
     return;
   }
   for (const entry of allowFrom) {
-    allowBody.appendChild(row([String(entry)]));
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "inline secondary";
+    removeBtn.textContent = "Delete";
+    removeBtn.addEventListener("click", async () => {
+      try {
+        await apiRequest("/remove", {
+          method: "POST",
+          body: { channel, accountId, id: String(entry || "") },
+        });
+        setStatus("Removed " + String(entry || ""), "ok");
+        await refreshAll();
+      } catch (err) {
+        setStatus(String(err instanceof Error ? err.message : err), "err");
+      }
+    });
+    allowBody.appendChild(row([String(entry), removeBtn]));
   }
 }
 
@@ -663,6 +680,20 @@ async function handleApiRequest(
     const id = requireTextField(body, "id");
     const bodyAccountId = normalizeOptionalText(body.accountId);
     const result = await addChannelAllowFromStoreEntry({
+      channel,
+      entry: id,
+      accountId: bodyAccountId,
+    });
+    sendJson(res, 200, { ok: true, channel, accountId: bodyAccountId ?? null, ...result });
+    return;
+  }
+
+  if (req.method === "POST" && subPath === "/remove") {
+    const body = await readJsonBody(req);
+    const channel = resolvePairingChannel(body.channel);
+    const id = requireTextField(body, "id");
+    const bodyAccountId = normalizeOptionalText(body.accountId);
+    const result = await removeChannelAllowFromStoreEntry({
       channel,
       entry: id,
       accountId: bodyAccountId,
