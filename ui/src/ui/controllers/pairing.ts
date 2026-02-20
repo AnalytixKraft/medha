@@ -3,13 +3,6 @@ import type { UiSettings } from "../storage.ts";
 
 export type PairingStatusTone = "success" | "info" | "danger" | null;
 
-export type PairingPendingEntry = {
-  channel: string;
-  code: string;
-  id: string;
-  createdAt?: string;
-};
-
 export type PairingAllowEntry = {
   channel: string;
   id: string;
@@ -27,7 +20,6 @@ export type PairingState = {
   pairingChannel: string;
   pairingAccountId: string;
   pairingContactId: string;
-  pairingPending: PairingPendingEntry[];
   pairingAllowlist: PairingAllowEntry[];
 };
 
@@ -38,10 +30,6 @@ type PairingApiOptions = {
 
 type PairingChannelsResponse = {
   channels?: unknown;
-};
-
-type PairingPendingResponse = {
-  requests?: unknown;
 };
 
 type PairingAllowResponse = {
@@ -62,32 +50,6 @@ function normalizeChannelList(value: unknown): string[] {
     return [];
   }
   return value.map((entry) => String(entry ?? "").trim()).filter((entry) => entry.length > 0);
-}
-
-function normalizePendingList(channel: string, value: unknown): PairingPendingEntry[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value
-    .map((entry) => {
-      if (!entry || typeof entry !== "object") {
-        return null;
-      }
-      const row = entry as Record<string, unknown>;
-      const code = typeof row.code === "string" ? row.code.trim() : "";
-      const id = typeof row.id === "string" ? row.id.trim() : "";
-      if (!code || !id) {
-        return null;
-      }
-      const createdAt = typeof row.createdAt === "string" ? row.createdAt.trim() : undefined;
-      return {
-        channel,
-        code,
-        id,
-        createdAt: createdAt && createdAt.length > 0 ? createdAt : undefined,
-      } satisfies PairingPendingEntry;
-    })
-    .filter((entry): entry is PairingPendingEntry => Boolean(entry));
 }
 
 function normalizeAllowlist(channel: string, value: unknown): PairingAllowEntry[] {
@@ -179,7 +141,6 @@ export async function loadPairing(state: PairingState) {
     const selected = state.pairingChannel.trim();
     if (channels.length === 0) {
       state.pairingChannel = "";
-      state.pairingPending = [];
       state.pairingAllowlist = [];
       setPairingStatus(state, "No pairing channels are available.", "info");
       return;
@@ -208,7 +169,6 @@ export async function refreshPairing(state: PairingState) {
     const accountId = currentAccountId(state);
     const channels = resolveSelectedChannels(state);
     if (channels.length === 0) {
-      state.pairingPending = [];
       state.pairingAllowlist = [];
       return;
     }
@@ -218,13 +178,12 @@ export async function refreshPairing(state: PairingState) {
         if (accountId) {
           query.set("accountId", accountId);
         }
-        const [pendingRes, allowRes] = await Promise.all([
-          pairingApiRequest<PairingPendingResponse>(state, `/pending?${query.toString()}`),
-          pairingApiRequest<PairingAllowResponse>(state, `/allow?${query.toString()}`),
-        ]);
+        const allowRes = await pairingApiRequest<PairingAllowResponse>(
+          state,
+          `/allow?${query.toString()}`,
+        );
         return {
           channel,
-          pending: normalizePendingList(channel, pendingRes.requests),
           allow: normalizeAllowlist(channel, allowRes.allowFrom),
         };
       }),
@@ -232,7 +191,6 @@ export async function refreshPairing(state: PairingState) {
     const failures: string[] = [];
     const results: Array<{
       channel: string;
-      pending: PairingPendingEntry[];
       allow: PairingAllowEntry[];
     }> = [];
     for (let i = 0; i < settled.length; i += 1) {
@@ -250,16 +208,6 @@ export async function refreshPairing(state: PairingState) {
     if (results.length === 0 && failures.length > 0) {
       throw new Error(failures[0]);
     }
-    const pending = results
-      .flatMap((entry) => entry.pending)
-      .toSorted((a, b) => {
-        const aTs = Date.parse(a.createdAt ?? "");
-        const bTs = Date.parse(b.createdAt ?? "");
-        if (Number.isFinite(aTs) && Number.isFinite(bTs)) {
-          return bTs - aTs;
-        }
-        return a.code.localeCompare(b.code);
-      });
     const allowDeduped = new Map<string, PairingAllowEntry>();
     for (const row of results.flatMap((entry) => entry.allow)) {
       allowDeduped.set(`${row.channel}:${row.id}`, row);
@@ -271,7 +219,6 @@ export async function refreshPairing(state: PairingState) {
       }
       return a.id.localeCompare(b.id);
     });
-    state.pairingPending = pending;
     state.pairingAllowlist = allowlist;
     if (failures.length > 0) {
       state.pairingError = `Some channels failed to load: ${failures.join(" | ")}`;
@@ -280,99 +227,6 @@ export async function refreshPairing(state: PairingState) {
     state.pairingError = String(err);
   } finally {
     state.pairingLoading = false;
-  }
-}
-
-export async function approvePairingCode(
-  state: PairingState,
-  code: string,
-  channelOverride?: string,
-) {
-  if (state.pairingBusy) {
-    return;
-  }
-  const channel = resolveActionChannel(state, channelOverride);
-  if (!channel) {
-    setPairingStatus(state, "Select a specific channel before approving.", "info");
-    return;
-  }
-  const normalizedCode = code.trim();
-  if (!normalizedCode) {
-    setPairingStatus(state, "Pairing code is required.", "info");
-    return;
-  }
-  state.pairingBusy = true;
-  let shouldRefresh = false;
-  try {
-    const accountId = currentAccountId(state);
-    await pairingApiRequest(state, "/approve", {
-      method: "POST",
-      body: {
-        channel,
-        ...(accountId ? { accountId } : {}),
-        code: normalizedCode,
-      },
-    });
-    setPairingStatus(state, `Approved ${normalizedCode} on ${channel}.`, "success");
-    shouldRefresh = true;
-  } catch (err) {
-    state.pairingError = String(err);
-    setPairingStatus(state, `Approve failed: ${String(err)}`, "danger");
-  } finally {
-    state.pairingBusy = false;
-  }
-  if (shouldRefresh) {
-    await refreshPairing(state);
-  }
-}
-
-export async function rejectPairingCode(
-  state: PairingState,
-  code: string,
-  channelOverride?: string,
-) {
-  if (state.pairingBusy) {
-    return;
-  }
-  const channel = resolveActionChannel(state, channelOverride);
-  if (!channel) {
-    setPairingStatus(state, "Select a specific channel before revoking.", "info");
-    return;
-  }
-  const normalizedCode = code.trim();
-  if (!normalizedCode) {
-    setPairingStatus(state, "Pairing code is required.", "info");
-    return;
-  }
-  state.pairingBusy = true;
-  let shouldRefresh = false;
-  try {
-    const accountId = currentAccountId(state);
-    const result = await pairingApiRequest<PairingMutationResponse>(state, "/reject", {
-      method: "POST",
-      body: {
-        channel,
-        ...(accountId ? { accountId } : {}),
-        code: normalizedCode,
-      },
-    });
-    const changed = result.changed === true;
-    setPairingStatus(
-      state,
-      changed
-        ? `Revoked pending code ${normalizedCode} on ${channel}.`
-        : `${normalizedCode} was not pending.`,
-      changed ? "success" : "info",
-    );
-    shouldRefresh = true;
-  } catch (err) {
-    state.pairingError = String(err);
-    setPairingStatus(state, `Revoke failed: ${String(err)}`, "danger");
-  } finally {
-    state.pairingBusy = false;
-  }
-  if (shouldRefresh) {
-    await refreshPairing(state);
   }
 }
 
@@ -388,6 +242,10 @@ export async function addPairingContact(state: PairingState, contactId: string) 
   const normalizedId = contactId.trim();
   if (!normalizedId) {
     setPairingStatus(state, "Contact ID / phone is required.", "info");
+    return;
+  }
+  if (normalizedId === "*") {
+    setPairingStatus(state, "Wildcard entries are disabled. Add a specific contact instead.", "info");
     return;
   }
   state.pairingBusy = true;

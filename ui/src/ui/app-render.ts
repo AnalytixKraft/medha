@@ -45,9 +45,7 @@ import { loadLogs } from "./controllers/logs.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import {
   addPairingContact,
-  approvePairingCode,
   loadPairing,
-  rejectPairingCode,
   refreshPairing,
   revokePairingContact,
 } from "./controllers/pairing.ts";
@@ -899,7 +897,6 @@ export function renderApp(state: AppViewState) {
                 channel: state.pairingChannel,
                 accountId: state.pairingAccountId,
                 contactId: state.pairingContactId,
-                pending: state.pairingPending,
                 allowlist: state.pairingAllowlist,
                 error: state.pairingError,
                 status: state.pairingStatus,
@@ -912,8 +909,6 @@ export function renderApp(state: AppViewState) {
                 onAccountIdChange: (next) => (state.pairingAccountId = next),
                 onContactIdChange: (next) => (state.pairingContactId = next),
                 onAddContact: () => addPairingContact(state, state.pairingContactId),
-                onApprove: (code, channel) => approvePairingCode(state, code, channel),
-                onReject: (code, channel) => rejectPairingCode(state, code, channel),
                 onRevoke: (id, channel) => revokePairingContact(state, id, channel),
               })
             : nothing

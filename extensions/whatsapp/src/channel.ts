@@ -33,6 +33,21 @@ import { getWhatsAppRuntime } from "./runtime.js";
 
 const meta = getChatChannelMeta("whatsapp");
 
+function normalizeManualOnlyDmPolicy(
+  policy: string | undefined,
+): "allowlist" | "disabled" {
+  if (policy === "disabled") {
+    return policy;
+  }
+  return "allowlist";
+}
+
+function normalizeManualOnlyAllowFrom(allowFrom: string[] | undefined): string[] {
+  return (allowFrom ?? [])
+    .map((entry) => String(entry ?? "").trim())
+    .filter((entry) => entry.length > 0 && entry !== "*");
+}
+
 export const whatsappPlugin: ChannelPlugin<ResolvedWhatsAppAccount> = {
   id: "whatsapp",
   meta: {
@@ -107,11 +122,11 @@ export const whatsappPlugin: ChannelPlugin<ResolvedWhatsAppAccount> = {
       enabled: account.enabled,
       configured: Boolean(account.authDir),
       linked: Boolean(account.authDir),
-      dmPolicy: account.dmPolicy,
-      allowFrom: account.allowFrom,
+      dmPolicy: normalizeManualOnlyDmPolicy(account.dmPolicy),
+      allowFrom: normalizeManualOnlyAllowFrom(account.allowFrom),
     }),
     resolveAllowFrom: ({ cfg, accountId }) =>
-      resolveWhatsAppAccount({ cfg, accountId }).allowFrom ?? [],
+      normalizeManualOnlyAllowFrom(resolveWhatsAppAccount({ cfg, accountId }).allowFrom),
     formatAllowFrom: ({ allowFrom }) =>
       allowFrom
         .map((entry) => String(entry).trim())
@@ -126,9 +141,10 @@ export const whatsappPlugin: ChannelPlugin<ResolvedWhatsAppAccount> = {
       const basePath = useAccountPath
         ? `channels.whatsapp.accounts.${resolvedAccountId}.`
         : "channels.whatsapp.";
+      const policy = normalizeManualOnlyDmPolicy(account.dmPolicy);
       return {
-        policy: account.dmPolicy ?? "pairing",
-        allowFrom: account.allowFrom ?? [],
+        policy,
+        allowFrom: normalizeManualOnlyAllowFrom(account.allowFrom),
         policyPath: `${basePath}dmPolicy`,
         allowFromPath: basePath,
         approveHint: formatPairingApproveHint("whatsapp"),
@@ -406,8 +422,8 @@ export const whatsappPlugin: ChannelPlugin<ResolvedWhatsAppAccount> = {
         lastMessageAt: runtime?.lastMessageAt ?? null,
         lastEventAt: runtime?.lastEventAt ?? null,
         lastError: runtime?.lastError ?? null,
-        dmPolicy: account.dmPolicy,
-        allowFrom: account.allowFrom,
+        dmPolicy: normalizeManualOnlyDmPolicy(account.dmPolicy),
+        allowFrom: normalizeManualOnlyAllowFrom(account.allowFrom),
       };
     },
     resolveAccountState: ({ configured }) => (configured ? "linked" : "not linked"),

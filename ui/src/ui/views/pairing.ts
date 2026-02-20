@@ -1,10 +1,8 @@
 import { html } from "lit";
 import type {
   PairingAllowEntry,
-  PairingPendingEntry,
   PairingStatusTone,
 } from "../controllers/pairing.ts";
-import { formatRelativeTimestamp } from "../format.ts";
 
 export type PairingProps = {
   loading: boolean;
@@ -13,7 +11,6 @@ export type PairingProps = {
   channel: string;
   accountId: string;
   contactId: string;
-  pending: PairingPendingEntry[];
   allowlist: PairingAllowEntry[];
   error: string | null;
   status: string | null;
@@ -23,21 +20,8 @@ export type PairingProps = {
   onAccountIdChange: (next: string) => void;
   onContactIdChange: (next: string) => void;
   onAddContact: () => void;
-  onApprove: (code: string, channel: string) => void;
-  onReject: (code: string, channel: string) => void;
   onRevoke: (id: string, channel: string) => void;
 };
-
-function formatCreatedAt(value?: string): string {
-  if (!value) {
-    return "n/a";
-  }
-  const ts = Date.parse(value);
-  if (!Number.isFinite(ts)) {
-    return value;
-  }
-  return formatRelativeTimestamp(ts);
-}
 
 function resolveStatusClass(tone: PairingStatusTone): string {
   if (tone === "success") {
@@ -132,7 +116,7 @@ export function renderPairing(props: PairingProps) {
       <div class="card">
         <div class="card-title">Manual Add Contact</div>
         <div class="card-sub">
-          Add a phone or contact ID manually. This prevents auto-pairing and keeps approvals manual.
+          Add a phone or contact ID manually. Unknown senders stay blocked until added here.
         </div>
         <div class="form-grid" style="margin-top: 14px;">
           <label class="field full">
@@ -158,59 +142,6 @@ export function renderPairing(props: PairingProps) {
               : null
           }
         </div>
-      </div>
-    </section>
-
-    <section class="card" style="margin-top: 18px;">
-      <div class="row pairing-row-between">
-        <div>
-          <div class="card-title">Pending Pairing Requests</div>
-          <div class="card-sub">Approve pending codes directly from this screen.</div>
-        </div>
-        <span class="pill">${props.pending.length}</span>
-      </div>
-
-      <div class="list pairing-list">
-        ${
-          props.pending.length === 0
-            ? html`
-                <div class="muted pairing-empty">No pending pairing requests.</div>
-              `
-            : props.pending.map(
-                (entry) => html`
-                  <div class="list-item">
-                    <div class="list-main">
-                      <div class="list-title">
-                        ${entry.id}
-                        <span class="pairing-tag">${entry.channel}</span>
-                      </div>
-                      <div class="list-sub">Code: <span class="mono">${entry.code}</span></div>
-                      <div class="muted" style="margin-top: 4px;">
-                        Requested ${formatCreatedAt(entry.createdAt)}
-                      </div>
-                    </div>
-                    <div class="list-meta">
-                      <div class="row pairing-row-end">
-                        <button
-                          class="btn btn--sm primary"
-                          ?disabled=${props.busy}
-                          @click=${() => props.onApprove(entry.code, entry.channel)}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          class="btn btn--sm danger"
-                          ?disabled=${props.busy}
-                          @click=${() => props.onReject(entry.code, entry.channel)}
-                        >
-                          Revoke
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                `,
-              )
-        }
       </div>
     </section>
 

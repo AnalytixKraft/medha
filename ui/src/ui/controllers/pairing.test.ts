@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  addPairingContact,
   loadPairing,
-  rejectPairingCode,
   refreshPairing,
   type PairingState,
   type PairingStatusTone,
@@ -34,7 +34,6 @@ function createState(overrides: Partial<PairingState> = {}): PairingState {
     pairingChannel: "",
     pairingAccountId: "",
     pairingContactId: "",
-    pairingPending: [],
     pairingAllowlist: [],
     ...overrides,
   };
@@ -58,9 +57,6 @@ describe("pairing controller", () => {
       if (url.includes("/pairing-contact/api/channels")) {
         return jsonResponse(200, { channels: ["whatsapp"] });
       }
-      if (url.includes("/pairing-contact/api/pending?channel=whatsapp")) {
-        return jsonResponse(200, { requests: [] });
-      }
       if (url.includes("/pairing-contact/api/allow?channel=whatsapp")) {
         return jsonResponse(200, { allowFrom: ["+15551234567", "+15557654321"] });
       }
@@ -82,17 +78,11 @@ describe("pairing controller", () => {
   it("keeps successful channel results when one channel fails", async () => {
     const fetchMock = vi.fn(async (input: string | URL | Request) => {
       const url = String(input);
-      if (url.includes("/pairing-contact/api/pending?channel=whatsapp")) {
-        return jsonResponse(200, { requests: [] });
-      }
       if (url.includes("/pairing-contact/api/allow?channel=whatsapp")) {
         return jsonResponse(200, { allowFrom: ["+15550001111"] });
       }
-      if (url.includes("/pairing-contact/api/pending?channel=telegram")) {
-        return jsonResponse(500, { error: "telegram pending failed" });
-      }
       if (url.includes("/pairing-contact/api/allow?channel=telegram")) {
-        return jsonResponse(200, { allowFrom: [] });
+        return jsonResponse(500, { error: "telegram allowlist failed" });
       }
       return jsonResponse(404, { error: "not found" });
     });
@@ -108,35 +98,17 @@ describe("pairing controller", () => {
     expect(state.pairingError).toContain("telegram");
   });
 
-  it("rejects a pending code and refreshes", async () => {
-    const fetchMock = vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
-      const url = String(input);
-      if (url.includes("/pairing-contact/api/reject")) {
-        const body = JSON.parse(String(init?.body ?? "{}")) as { code?: string };
-        expect(body.code).toBe("CODE1234");
-        return jsonResponse(200, { changed: true });
-      }
-      if (url.includes("/pairing-contact/api/pending?channel=whatsapp")) {
-        return jsonResponse(200, { requests: [] });
-      }
-      if (url.includes("/pairing-contact/api/allow?channel=whatsapp")) {
-        return jsonResponse(200, { allowFrom: [] });
-      }
-      return jsonResponse(404, { error: "not found" });
-    });
+  it("blocks wildcard allowlist entries in manual-only mode", async () => {
+    const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const state = createState({
       pairingChannel: "whatsapp",
       pairingChannels: ["whatsapp"],
-      pairingPending: [
-        { channel: "whatsapp", code: "CODE1234", id: "+15550001111", createdAt: "2026-01-01" },
-      ],
     });
 
-    await rejectPairingCode(state, "CODE1234", "whatsapp");
+    await addPairingContact(state, "*");
 
-    expect(state.pairingStatus).toContain("Revoked pending code CODE1234");
-    expect(state.pairingPending).toEqual([]);
-    expect(state.pairingBusy).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(state.pairingStatus).toContain("Wildcard entries are disabled");
   });
 });

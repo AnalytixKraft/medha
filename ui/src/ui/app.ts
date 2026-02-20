@@ -57,7 +57,6 @@ import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
 import type {
   PairingAllowEntry,
-  PairingPendingEntry,
   PairingStatusTone,
 } from "./controllers/pairing.ts";
 import type { SkillMessage } from "./controllers/skills.ts";
@@ -170,7 +169,6 @@ export class OpenClawApp extends LitElement {
   @state() pairingChannel = "";
   @state() pairingAccountId = "";
   @state() pairingContactId = "";
-  @state() pairingPending: PairingPendingEntry[] = [];
   @state() pairingAllowlist: PairingAllowEntry[] = [];
   @state() execApprovalsLoading = false;
   @state() execApprovalsSaving = false;

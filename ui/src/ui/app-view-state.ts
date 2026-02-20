@@ -5,7 +5,6 @@ import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
 import type {
   PairingAllowEntry,
-  PairingPendingEntry,
   PairingStatusTone,
 } from "./controllers/pairing.ts";
 import type { SkillMessage } from "./controllers/skills.ts";
@@ -90,7 +89,6 @@ export type AppViewState = {
   pairingChannel: string;
   pairingAccountId: string;
   pairingContactId: string;
-  pairingPending: PairingPendingEntry[];
   pairingAllowlist: PairingAllowEntry[];
   execApprovalsLoading: boolean;
   execApprovalsSaving: boolean;
