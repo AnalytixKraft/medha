@@ -78,6 +78,7 @@ export function createMedhaTools(options?: {
   const webSearchTool = createWebSearchTool({
     config: options?.config,
     sandboxed: options?.sandboxed,
+    agentDir: options?.agentDir,
   });
   const webFetchTool = createWebFetchTool({
     config: options?.config,

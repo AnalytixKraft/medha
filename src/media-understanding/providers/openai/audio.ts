@@ -10,6 +10,18 @@ function resolveModel(model?: string): string {
   return trimmed || DEFAULT_OPENAI_AUDIO_MODEL;
 }
 
+function resolveLanguage(language?: string): string | undefined {
+  const trimmed = language?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const normalized = trimmed.toLowerCase();
+  if (normalized === "auto" || normalized === "automatic" || normalized === "detect") {
+    return undefined;
+  }
+  return trimmed;
+}
+
 export async function transcribeOpenAiCompatibleAudio(
   params: AudioTranscriptionRequest,
 ): Promise<AudioTranscriptionResult> {
@@ -27,8 +39,9 @@ export async function transcribeOpenAiCompatibleAudio(
   });
   form.append("file", blob, fileName);
   form.append("model", model);
-  if (params.language?.trim()) {
-    form.append("language", params.language.trim());
+  const language = resolveLanguage(params.language);
+  if (language) {
+    form.append("language", language);
   }
   if (params.prompt?.trim()) {
     form.append("prompt", params.prompt.trim());

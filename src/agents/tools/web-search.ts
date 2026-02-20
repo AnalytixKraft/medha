@@ -3,6 +3,7 @@ import { formatCliCommand } from "../../cli/command-format.js";
 import type { MedhaConfig } from "../../config/config.js";
 import { wrapWebContent } from "../../security/external-content.js";
 import { normalizeSecretInput } from "../../utils/normalize-secret-input.js";
+import { resolveApiKeyForProvider } from "../model-auth.js";
 import type { AnyAgentTool } from "./common.js";
 import { jsonResult, readNumberParam, readStringParam } from "./common.js";
 import {
@@ -18,7 +19,7 @@ import {
   writeCache,
 } from "./web-shared.js";
 
-const SEARCH_PROVIDERS = ["brave", "perplexity", "grok"] as const;
+const SEARCH_PROVIDERS = ["brave", "perplexity", "grok", "openai"] as const;
 const DEFAULT_SEARCH_COUNT = 5;
 const MAX_SEARCH_COUNT = 10;
 
@@ -31,6 +32,8 @@ const OPENROUTER_KEY_PREFIXES = ["sk-or-"];
 
 const XAI_API_ENDPOINT = "https://api.x.ai/v1/responses";
 const DEFAULT_GROK_MODEL = "grok-4-1-fast";
+const OPENAI_API_ENDPOINT = "https://api.openai.com/v1/responses";
+const DEFAULT_OPENAI_MODEL = "gpt-5";
 
 const SEARCH_CACHE = new Map<string, CacheEntry<Record<string, unknown>>>();
 const BRAVE_FRESHNESS_SHORTCUTS = new Set(["pd", "pw", "pm", "py"]);
@@ -102,6 +105,12 @@ type GrokConfig = {
   inlineCitations?: boolean;
 };
 
+type OpenAiConfig = {
+  apiKey?: string;
+  model?: string;
+  baseUrl?: string;
+};
+
 type GrokSearchResponse = {
   output?: Array<{
     type?: string;
@@ -123,6 +132,21 @@ type GrokSearchResponse = {
     start_index: number;
     end_index: number;
     url: string;
+  }>;
+};
+
+type OpenAiSearchResponse = {
+  output_text?: string;
+  output?: Array<{
+    type?: string;
+    content?: Array<{
+      type?: string;
+      text?: string;
+      annotations?: Array<{
+        type?: string;
+        url?: string;
+      }>;
+    }>;
   }>;
 };
 
@@ -159,6 +183,36 @@ function extractGrokContent(data: GrokSearchResponse): {
   // Fallback: deprecated output_text field
   const text = typeof data.output_text === "string" ? data.output_text : undefined;
   return { text, annotationCitations: [] };
+}
+
+function extractOpenAiContent(data: OpenAiSearchResponse): {
+  text: string | undefined;
+  citations: string[];
+} {
+  const citations: string[] = [];
+  for (const output of data.output ?? []) {
+    for (const block of output.content ?? []) {
+      if (
+        !(
+          (block.type === "output_text" || block.type === "text") &&
+          typeof block.text === "string" &&
+          block.text
+        )
+      ) {
+        continue;
+      }
+      for (const annotation of block.annotations ?? []) {
+        if (annotation.type === "url_citation" && typeof annotation.url === "string") {
+          citations.push(annotation.url);
+        }
+      }
+      return { text: block.text, citations: Array.from(new Set(citations)) };
+    }
+  }
+  return {
+    text: typeof data.output_text === "string" ? data.output_text : undefined,
+    citations: Array.from(new Set(citations)),
+  };
 }
 
 function resolveSearchConfig(cfg?: MedhaConfig): WebSearchConfig {
@@ -205,6 +259,14 @@ function missingSearchKeyPayload(provider: (typeof SEARCH_PROVIDERS)[number]) {
       docs: "https://docs.medha.ai/tools/web",
     };
   }
+  if (provider === "openai") {
+    return {
+      error: "missing_openai_api_key",
+      message:
+        "web_search (openai) needs an OpenAI API key. Configure auth for provider openai (recommended), set OPENAI_API_KEY in the Gateway environment, or configure tools.web.search.openai.apiKey.",
+      docs: "https://docs.medha.ai/tools/web",
+    };
+  }
   return {
     error: "missing_brave_api_key",
     message: `web_search needs a Brave Search API key. Run \`${formatCliCommand("medha configure --section web")}\` to store it, or set BRAVE_API_KEY in the Gateway environment.`,
@@ -225,6 +287,9 @@ function resolveSearchProvider(search?: WebSearchConfig): (typeof SEARCH_PROVIDE
   }
   if (raw === "brave") {
     return "brave";
+  }
+  if (raw === "openai") {
+    return "openai";
   }
   return "brave";
 }
@@ -365,6 +430,45 @@ function resolveGrokModel(grok?: GrokConfig): string {
 
 function resolveGrokInlineCitations(grok?: GrokConfig): boolean {
   return grok?.inlineCitations === true;
+}
+
+function resolveOpenAiConfig(search?: WebSearchConfig): OpenAiConfig {
+  if (!search || typeof search !== "object") {
+    return {};
+  }
+  const openai = "openai" in search ? search.openai : undefined;
+  if (!openai || typeof openai !== "object") {
+    return {};
+  }
+  return openai as OpenAiConfig;
+}
+
+function resolveOpenAiApiKey(openai?: OpenAiConfig): string | undefined {
+  const fromConfig = normalizeApiKey(openai?.apiKey);
+  if (fromConfig) {
+    return fromConfig;
+  }
+  const fromEnv = normalizeApiKey(process.env.OPENAI_API_KEY);
+  return fromEnv || undefined;
+}
+
+function resolveOpenAiModel(openai?: OpenAiConfig): string {
+  const fromConfig =
+    openai && "model" in openai && typeof openai.model === "string" ? openai.model.trim() : "";
+  return fromConfig || DEFAULT_OPENAI_MODEL;
+}
+
+function resolveOpenAiBaseUrl(openai?: OpenAiConfig): string {
+  const fromConfig =
+    openai && "baseUrl" in openai && typeof openai.baseUrl === "string"
+      ? openai.baseUrl.trim()
+      : "";
+  if (!fromConfig) {
+    return OPENAI_API_ENDPOINT;
+  }
+  return fromConfig.endsWith("/responses")
+    ? fromConfig
+    : `${fromConfig.replace(/\/$/, "")}/responses`;
 }
 
 function resolveSearchCount(value: unknown, fallback: number): number {
@@ -551,6 +655,43 @@ async function runGrokSearch(params: {
   return { content, citations, inlineCitations };
 }
 
+async function runOpenAiSearch(params: {
+  query: string;
+  apiKey: string;
+  model: string;
+  endpoint: string;
+  timeoutSeconds: number;
+}): Promise<{ content: string; citations: string[] }> {
+  const body: Record<string, unknown> = {
+    model: params.model,
+    input: params.query,
+    tools: [{ type: "web_search" }],
+  };
+
+  const res = await fetch(params.endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${params.apiKey}`,
+    },
+    body: JSON.stringify(body),
+    signal: withTimeout(undefined, params.timeoutSeconds * 1000),
+  });
+
+  if (!res.ok) {
+    const detailResult = await readResponseText(res, { maxBytes: 64_000 });
+    const detail = detailResult.text;
+    throw new Error(`OpenAI Responses API error (${res.status}): ${detail || res.statusText}`);
+  }
+
+  const data = (await res.json()) as OpenAiSearchResponse;
+  const parsed = extractOpenAiContent(data);
+  return {
+    content: parsed.text ?? "No response",
+    citations: parsed.citations,
+  };
+}
+
 async function runWebSearch(params: {
   query: string;
   count: number;
@@ -566,13 +707,17 @@ async function runWebSearch(params: {
   perplexityModel?: string;
   grokModel?: string;
   grokInlineCitations?: boolean;
+  openaiModel?: string;
+  openaiEndpoint?: string;
 }): Promise<Record<string, unknown>> {
   const cacheKey = normalizeCacheKey(
     params.provider === "brave"
       ? `${params.provider}:${params.query}:${params.count}:${params.country || "default"}:${params.search_lang || "default"}:${params.ui_lang || "default"}:${params.freshness || "default"}`
       : params.provider === "perplexity"
         ? `${params.provider}:${params.query}:${params.perplexityBaseUrl ?? DEFAULT_PERPLEXITY_BASE_URL}:${params.perplexityModel ?? DEFAULT_PERPLEXITY_MODEL}:${params.freshness || "default"}`
-        : `${params.provider}:${params.query}:${params.grokModel ?? DEFAULT_GROK_MODEL}:${String(params.grokInlineCitations ?? false)}`,
+        : params.provider === "grok"
+          ? `${params.provider}:${params.query}:${params.grokModel ?? DEFAULT_GROK_MODEL}:${String(params.grokInlineCitations ?? false)}`
+          : `${params.provider}:${params.query}:${params.openaiEndpoint ?? OPENAI_API_ENDPOINT}:${params.openaiModel ?? DEFAULT_OPENAI_MODEL}`,
   );
   const cached = readCache(SEARCH_CACHE, cacheKey);
   if (cached) {
@@ -632,6 +777,33 @@ async function runWebSearch(params: {
       content: wrapWebContent(content),
       citations,
       inlineCitations,
+    };
+    writeCache(SEARCH_CACHE, cacheKey, payload, params.cacheTtlMs);
+    return payload;
+  }
+
+  if (params.provider === "openai") {
+    const { content, citations } = await runOpenAiSearch({
+      query: params.query,
+      apiKey: params.apiKey,
+      model: params.openaiModel ?? DEFAULT_OPENAI_MODEL,
+      endpoint: params.openaiEndpoint ?? OPENAI_API_ENDPOINT,
+      timeoutSeconds: params.timeoutSeconds,
+    });
+
+    const payload = {
+      query: params.query,
+      provider: params.provider,
+      model: params.openaiModel ?? DEFAULT_OPENAI_MODEL,
+      tookMs: Date.now() - start,
+      externalContent: {
+        untrusted: true,
+        source: "web_search",
+        provider: params.provider,
+        wrapped: true,
+      },
+      content: wrapWebContent(content),
+      citations,
     };
     writeCache(SEARCH_CACHE, cacheKey, payload, params.cacheTtlMs);
     return payload;
@@ -708,6 +880,7 @@ async function runWebSearch(params: {
 export function createWebSearchTool(options?: {
   config?: MedhaConfig;
   sandboxed?: boolean;
+  agentDir?: string;
 }): AnyAgentTool | null {
   const search = resolveSearchConfig(options?.config);
   if (!resolveSearchEnabled({ search, sandboxed: options?.sandboxed })) {
@@ -717,13 +890,16 @@ export function createWebSearchTool(options?: {
   const provider = resolveSearchProvider(search);
   const perplexityConfig = resolvePerplexityConfig(search);
   const grokConfig = resolveGrokConfig(search);
+  const openaiConfig = resolveOpenAiConfig(search);
 
   const description =
     provider === "perplexity"
       ? "Search the web using Perplexity Sonar (direct or via OpenRouter). Returns AI-synthesized answers with citations from real-time web search."
       : provider === "grok"
         ? "Search the web using xAI Grok. Returns AI-synthesized answers with citations from real-time web search."
-        : "Search the web using Brave Search API. Supports region-specific and localized search via country and language parameters. Returns titles, URLs, and snippets for fast research.";
+        : provider === "openai"
+          ? "Search the web using OpenAI Responses + web_search tool. Returns AI-synthesized answers with citations from real-time web search."
+          : "Search the web using Brave Search API. Supports region-specific and localized search via country and language parameters. Returns titles, URLs, and snippets for fast research.";
 
   return {
     label: "Web Search",
@@ -733,12 +909,25 @@ export function createWebSearchTool(options?: {
     execute: async (_toolCallId, args) => {
       const perplexityAuth =
         provider === "perplexity" ? resolvePerplexityApiKey(perplexityConfig) : undefined;
+      const openaiKey =
+        provider === "openai"
+          ? (resolveOpenAiApiKey(openaiConfig) ??
+            (
+              await resolveApiKeyForProvider({
+                provider: "openai",
+                cfg: options?.config,
+                agentDir: options?.agentDir,
+              }).catch(() => ({ apiKey: undefined }))
+            ).apiKey)
+          : undefined;
       const apiKey =
         provider === "perplexity"
           ? perplexityAuth?.apiKey
           : provider === "grok"
             ? resolveGrokApiKey(grokConfig)
-            : resolveSearchApiKey(search);
+            : provider === "openai"
+              ? openaiKey
+              : resolveSearchApiKey(search);
 
       if (!apiKey) {
         return jsonResult(missingSearchKeyPayload(provider));
@@ -786,6 +975,8 @@ export function createWebSearchTool(options?: {
         perplexityModel: resolvePerplexityModel(perplexityConfig),
         grokModel: resolveGrokModel(grokConfig),
         grokInlineCitations: resolveGrokInlineCitations(grokConfig),
+        openaiModel: resolveOpenAiModel(openaiConfig),
+        openaiEndpoint: resolveOpenAiBaseUrl(openaiConfig),
       });
       return jsonResult(result);
     },
@@ -803,4 +994,8 @@ export const __testing = {
   resolveGrokModel,
   resolveGrokInlineCitations,
   extractGrokContent,
+  resolveOpenAiApiKey,
+  resolveOpenAiModel,
+  resolveOpenAiBaseUrl,
+  extractOpenAiContent,
 } as const;

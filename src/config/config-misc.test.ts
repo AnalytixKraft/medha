@@ -70,6 +70,25 @@ describe("web search provider config", () => {
 
     expect(res.ok).toBe(true);
   });
+
+  it("accepts openai provider and config", () => {
+    const res = validateConfigObject({
+      tools: {
+        web: {
+          search: {
+            enabled: true,
+            provider: "openai",
+            openai: {
+              model: "gpt-5",
+              baseUrl: "https://api.openai.com/v1",
+            },
+          },
+        },
+      },
+    });
+
+    expect(res.ok).toBe(true);
+  });
 });
 
 describe("talk.voiceAliases", () => {

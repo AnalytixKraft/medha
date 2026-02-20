@@ -81,4 +81,20 @@ describe("transcribeOpenAiCompatibleAudio", () => {
       }),
     ).rejects.toThrow("Audio transcription response missing text");
   });
+
+  it("omits unsupported auto language hint", async () => {
+    const { fetchFn, getRequest } = createRequestCaptureJsonFetch({ text: "ok" });
+
+    await transcribeOpenAiCompatibleAudio({
+      buffer: Buffer.from("audio"),
+      fileName: "voice.ogg",
+      apiKey: "test-key",
+      timeoutMs: 1000,
+      language: " auto ",
+      fetchFn,
+    });
+
+    const form = getRequest().init?.body as FormData;
+    expect(form.get("language")).toBeNull();
+  });
 });

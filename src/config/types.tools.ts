@@ -389,8 +389,8 @@ export type ToolsConfig = {
     search?: {
       /** Enable web search tool (default: true when API key is present). */
       enabled?: boolean;
-      /** Search provider ("brave", "perplexity", or "grok"). */
-      provider?: "brave" | "perplexity" | "grok";
+      /** Search provider ("brave", "perplexity", "grok", or "openai"). */
+      provider?: "brave" | "perplexity" | "grok" | "openai";
       /** Brave Search API key (optional; defaults to BRAVE_API_KEY env var). */
       apiKey?: string;
       /** Default search results count (1-10). */
@@ -416,6 +416,15 @@ export type ToolsConfig = {
         model?: string;
         /** Include inline citations in response text as markdown links (default: false). */
         inlineCitations?: boolean;
+      };
+      /** OpenAI-specific configuration (used when provider="openai"). */
+      openai?: {
+        /** API key for OpenAI (fallbacks: OPENAI_API_KEY env var, then auth profiles). */
+        apiKey?: string;
+        /** Model to use (defaults to "gpt-5"). */
+        model?: string;
+        /** Base URL override for OpenAI Responses API (default: https://api.openai.com/v1). */
+        baseUrl?: string;
       };
     };
     fetch?: {
