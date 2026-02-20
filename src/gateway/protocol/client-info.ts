@@ -1,6 +1,8 @@
 export const GATEWAY_CLIENT_IDS = {
   WEBCHAT_UI: "webchat-ui",
   CONTROL_UI: "medha-control-ui",
+  // Backward-compatible alias for older Control UI bundles.
+  CONTROL_UI_LEGACY: "openclaw-control-ui",
   WEBCHAT: "webchat",
   CLI: "cli",
   GATEWAY_CLIENT: "gateway-client",
@@ -63,6 +65,14 @@ export function normalizeGatewayClientId(raw?: string | null): GatewayClientId |
 
 export function normalizeGatewayClientName(raw?: string | null): GatewayClientName | undefined {
   return normalizeGatewayClientId(raw);
+}
+
+export function isControlUiClientId(raw?: string | null): boolean {
+  const normalized = normalizeGatewayClientId(raw);
+  return (
+    normalized === GATEWAY_CLIENT_IDS.CONTROL_UI ||
+    normalized === GATEWAY_CLIENT_IDS.CONTROL_UI_LEGACY
+  );
 }
 
 export function normalizeGatewayClientMode(raw?: string | null): GatewayClientMode | undefined {

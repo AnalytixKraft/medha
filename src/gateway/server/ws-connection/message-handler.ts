@@ -35,7 +35,7 @@ import { isLoopbackAddress, isTrustedProxyAddress, resolveGatewayClientIp } from
 import { resolveHostName } from "../../net.js";
 import { resolveNodeCommandAllowlist } from "../../node-command-policy.js";
 import { checkBrowserOrigin } from "../../origin-check.js";
-import { GATEWAY_CLIENT_IDS } from "../../protocol/client-info.js";
+import { isControlUiClientId } from "../../protocol/client-info.js";
 import {
   type ConnectParams,
   ErrorCodes,
@@ -304,7 +304,7 @@ export function attachGatewayWsMessageHandler(params: {
         connectParams.role = role;
         connectParams.scopes = scopes;
 
-        const isControlUi = connectParams.client.id === GATEWAY_CLIENT_IDS.CONTROL_UI;
+        const isControlUi = isControlUiClientId(connectParams.client.id);
         const isWebchat = isWebchatConnect(connectParams);
         if (isControlUi || isWebchat) {
           const originCheck = checkBrowserOrigin({

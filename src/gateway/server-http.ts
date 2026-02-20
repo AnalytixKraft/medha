@@ -53,6 +53,7 @@ import { getBearerToken, getHeader } from "./http-utils.js";
 import { isPrivateOrLoopbackAddress, resolveGatewayClientIp } from "./net.js";
 import { handleOpenAiHttpRequest } from "./openai-http.js";
 import { handleOpenResponsesHttpRequest } from "./openresponses-http.js";
+import { handlePairingContactUiRequest } from "./pairing-contact-ui.js";
 import type { GatewayWsClient } from "./server/ws-types.js";
 import { handleToolsInvokeHttpRequest } from "./tools-invoke-http.js";
 
@@ -565,6 +566,29 @@ export function createGatewayHttpServer(opts: {
         }
       }
       if (controlUiEnabled) {
+        if (
+          await handlePairingContactUiRequest({
+            req,
+            res,
+            pathname: requestPath,
+            basePath: controlUiBasePath,
+            authorizeApiRequest: async (request) => {
+              const token = getBearerToken(request);
+              return await authorizeGatewayConnect({
+                auth: resolvedAuth,
+                connectAuth: token ? { token, password: token } : null,
+                req: request,
+                trustedProxies,
+                rateLimiter,
+              });
+            },
+            onApiAuthFailure: (response, authResult) => {
+              sendGatewayAuthFailure(response, authResult);
+            },
+          })
+        ) {
+          return;
+        }
         if (
           handleControlUiAvatarRequest(req, res, {
             basePath: controlUiBasePath,
