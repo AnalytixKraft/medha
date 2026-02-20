@@ -1,10 +1,6 @@
 import { loadConfig } from "../../config/config.js";
 import { logVerbose } from "../../globals.js";
-import { buildPairingReply } from "../../pairing/pairing-messages.js";
-import {
-  readChannelAllowFromStore,
-  upsertChannelPairingRequest,
-} from "../../pairing/pairing-store.js";
+import { readChannelAllowFromStore } from "../../pairing/pairing-store.js";
 import { isSelfChatMode, normalizeE164 } from "../../utils.js";
 import { resolveWhatsAppAccount } from "../accounts.js";
 
@@ -14,8 +10,6 @@ export type InboundAccessControlResult = {
   isSelfChat: boolean;
   resolvedAccountId: string;
 };
-
-const PAIRING_REPLY_HISTORY_GRACE_MS = 30_000;
 
 export async function checkInboundAccessControl(params: {
   accountId: string;
@@ -38,7 +32,7 @@ export async function checkInboundAccessControl(params: {
     cfg,
     accountId: params.accountId,
   });
-  const dmPolicy = account.dmPolicy ?? "pairing";
+  const dmPolicy = account.dmPolicy ?? "allowlist";
   const configuredAllowFrom = account.allowFrom;
   const storeAllowFrom = await readChannelAllowFromStore(
     "whatsapp",
@@ -57,14 +51,6 @@ export async function checkInboundAccessControl(params: {
     (configuredAllowFrom && configuredAllowFrom.length > 0 ? configuredAllowFrom : undefined);
   const isSamePhone = params.from === params.selfE164;
   const isSelfChat = isSelfChatMode(params.selfE164, configuredAllowFrom);
-  const pairingGraceMs =
-    typeof params.pairingGraceMs === "number" && params.pairingGraceMs > 0
-      ? params.pairingGraceMs
-      : PAIRING_REPLY_HISTORY_GRACE_MS;
-  const suppressPairingReply =
-    typeof params.connectedAtMs === "number" &&
-    typeof params.messageTimestampMs === "number" &&
-    params.messageTimestampMs < params.connectedAtMs - pairingGraceMs;
 
   // Pre-compute normalized allowlists for filtering.
   const dmHasWildcard = allowFrom?.includes("*") ?? false;
@@ -119,7 +105,10 @@ export async function checkInboundAccessControl(params: {
     }
   }
 
-  // DM access control (secure defaults): "pairing" (default) / "allowlist" / "open" / "disabled".
+  // DM access control:
+  // - "open": allow anyone
+  // - "allowlist"/"pairing": manual allowlist only (block unknown senders, no auto reply)
+  // - "disabled": block all DMs
   if (!params.group) {
     if (params.isFromMe && !isSamePhone) {
       logVerbose("Skipping outbound DM (fromMe); no pairing reply needed.");
@@ -145,36 +134,7 @@ export async function checkInboundAccessControl(params: {
         dmHasWildcard ||
         (normalizedAllowFrom.length > 0 && normalizedAllowFrom.includes(candidate));
       if (!allowed) {
-        if (dmPolicy === "pairing") {
-          if (suppressPairingReply) {
-            logVerbose(`Skipping pairing reply for historical DM from ${candidate}.`);
-          } else {
-            const { code, created } = await upsertChannelPairingRequest({
-              channel: "whatsapp",
-              id: candidate,
-              accountId: account.accountId,
-              meta: { name: (params.pushName ?? "").trim() || undefined },
-            });
-            if (created) {
-              logVerbose(
-                `whatsapp pairing request sender=${candidate} name=${params.pushName ?? "unknown"}`,
-              );
-              try {
-                await params.sock.sendMessage(params.remoteJid, {
-                  text: buildPairingReply({
-                    channel: "whatsapp",
-                    idLine: `Your WhatsApp phone number: ${candidate}`,
-                    code,
-                  }),
-                });
-              } catch (err) {
-                logVerbose(`whatsapp pairing reply failed for ${candidate}: ${String(err)}`);
-              }
-            }
-          }
-        } else {
-          logVerbose(`Blocked unauthorized sender ${candidate} (dmPolicy=${dmPolicy})`);
-        }
+        logVerbose(`Blocked unauthorized sender ${candidate} (dmPolicy=${dmPolicy})`);
         return {
           allowed: false,
           shouldMarkRead: false,

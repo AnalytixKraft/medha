@@ -34,6 +34,7 @@ describe("iconForTab", () => {
     expect(iconForTab("cron")).toBe("loader");
     expect(iconForTab("skills")).toBe("zap");
     expect(iconForTab("nodes")).toBe("monitor");
+    expect(iconForTab("pairing")).toBe("smartphone");
     expect(iconForTab("config")).toBe("settings");
     expect(iconForTab("debug")).toBe("bug");
     expect(iconForTab("logs")).toBe("scrollText");
@@ -58,6 +59,7 @@ describe("titleForTab", () => {
   it("returns expected titles", () => {
     expect(titleForTab("chat")).toBe("Chat");
     expect(titleForTab("overview")).toBe("Overview");
+    expect(titleForTab("pairing")).toBe("Pairing");
     expect(titleForTab("cron")).toBe("Cron Jobs");
   });
 });

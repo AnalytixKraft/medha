@@ -3,6 +3,10 @@ import type { CompactionStatus } from "./app-tool-stream.ts";
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
+import type {
+  PairingAllowEntry,
+  PairingStatusTone,
+} from "./controllers/pairing.ts";
 import type { SkillMessage } from "./controllers/skills.ts";
 import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
@@ -76,6 +80,16 @@ export type AppViewState = {
   devicesLoading: boolean;
   devicesError: string | null;
   devicesList: DevicePairingList | null;
+  pairingLoading: boolean;
+  pairingBusy: boolean;
+  pairingError: string | null;
+  pairingStatus: string | null;
+  pairingStatusTone: PairingStatusTone;
+  pairingChannels: string[];
+  pairingChannel: string;
+  pairingAccountId: string;
+  pairingContactId: string;
+  pairingAllowlist: PairingAllowEntry[];
   execApprovalsLoading: boolean;
   execApprovalsSaving: boolean;
   execApprovalsDirty: boolean;

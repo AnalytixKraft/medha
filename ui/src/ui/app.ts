@@ -55,6 +55,10 @@ import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./contro
 import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
+import type {
+  PairingAllowEntry,
+  PairingStatusTone,
+} from "./controllers/pairing.ts";
 import type { SkillMessage } from "./controllers/skills.ts";
 import type { GatewayBrowserClient, GatewayHelloOk } from "./gateway.ts";
 import type { Tab } from "./navigation.ts";
@@ -156,6 +160,16 @@ export class OpenClawApp extends LitElement {
   @state() devicesLoading = false;
   @state() devicesError: string | null = null;
   @state() devicesList: DevicePairingList | null = null;
+  @state() pairingLoading = false;
+  @state() pairingBusy = false;
+  @state() pairingError: string | null = null;
+  @state() pairingStatus: string | null = null;
+  @state() pairingStatusTone: PairingStatusTone = null;
+  @state() pairingChannels: string[] = [];
+  @state() pairingChannel = "";
+  @state() pairingAccountId = "";
+  @state() pairingContactId = "";
+  @state() pairingAllowlist: PairingAllowEntry[] = [];
   @state() execApprovalsLoading = false;
   @state() execApprovalsSaving = false;
   @state() execApprovalsDirty = false;

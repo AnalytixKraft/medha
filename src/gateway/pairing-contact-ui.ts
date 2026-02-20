@@ -2,8 +2,6 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { listPairingChannels, resolvePairingChannel } from "../channels/plugins/pairing.js";
 import {
   addChannelAllowFromStoreEntry,
-  approveChannelPairingCode,
-  listChannelPairingRequests,
   readChannelAllowFromStore,
   removeChannelAllowFromStoreEntry,
 } from "../pairing/pairing-store.js";
@@ -264,7 +262,7 @@ function renderPairingContactHtml(paths: PairingContactUiPaths): string {
 
       <div class="panel">
         <h1>Pair Contact</h1>
-        <div class="muted">Approve pairing codes or manually allow a contact.</div>
+        <div class="muted">Manually allow contacts only. Unknown senders stay blocked.</div>
       </div>
 
       <div class="panel">
@@ -287,21 +285,6 @@ function renderPairingContactHtml(paths: PairingContactUiPaths): string {
           <button id="refreshBtn">Refresh</button>
         </div>
         <div id="status" class="status"></div>
-      </div>
-
-      <div class="panel">
-        <h2>Pending Pairing Requests</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Code</th>
-              <th>ID</th>
-              <th>Requested</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody id="pendingBody"></tbody>
-        </table>
       </div>
 
       <div class="panel">
@@ -341,7 +324,6 @@ function renderPairingContactScript(): string {
 const tokenInput = document.getElementById("token");
 const channelSelect = document.getElementById("channel");
 const accountIdInput = document.getElementById("accountId");
-const pendingBody = document.getElementById("pendingBody");
 const allowBody = document.getElementById("allowBody");
 const addBtn = document.getElementById("addBtn");
 const refreshBtn = document.getElementById("refreshBtn");
@@ -473,49 +455,6 @@ async function loadChannels() {
   }
 }
 
-async function loadPending() {
-  const channel = currentChannel();
-  if (!channel) {
-    clearChildren(pendingBody);
-    return;
-  }
-  const accountId = currentAccountId();
-  const q = new URLSearchParams({ channel });
-  if (accountId) q.set("accountId", accountId);
-  const res = await apiRequest("/pending?" + q.toString());
-  const requests = Array.isArray(res.requests) ? res.requests : [];
-  clearChildren(pendingBody);
-  if (requests.length === 0) {
-    pendingBody.appendChild(row(["-", "No pending requests", "-", "-"]));
-    return;
-  }
-  for (const req of requests) {
-    const approveBtn = document.createElement("button");
-    approveBtn.className = "inline";
-    approveBtn.textContent = "Approve";
-    approveBtn.addEventListener("click", async () => {
-      try {
-        await apiRequest("/approve", {
-          method: "POST",
-          body: { channel, accountId, code: String(req.code || "") },
-        });
-        setStatus("Approved code " + String(req.code || ""), "ok");
-        await refreshAll();
-      } catch (err) {
-        setStatus(String(err instanceof Error ? err.message : err), "err");
-      }
-    });
-    pendingBody.appendChild(
-      row([
-        String(req.code || ""),
-        String(req.id || ""),
-        String(req.createdAt || ""),
-        approveBtn,
-      ]),
-    );
-  }
-}
-
 async function loadAllowlist() {
   const channel = currentChannel();
   if (!channel) {
@@ -553,7 +492,6 @@ async function loadAllowlist() {
 }
 
 async function refreshAll() {
-  await loadPending();
   await loadAllowlist();
 }
 
@@ -609,6 +547,10 @@ addBtn.addEventListener("click", async () => {
     setStatus("Contact ID is required", "warn");
     return;
   }
+  if (contactId === "*") {
+    setStatus("Wildcard entries are disabled. Add a specific contact.", "warn");
+    return;
+  }
   try {
     await apiRequest("/add", {
       method: "POST",
@@ -642,13 +584,6 @@ async function handleApiRequest(
     return;
   }
 
-  if (req.method === "GET" && subPath === "/pending") {
-    const channel = resolvePairingChannel(url.searchParams.get("channel"));
-    const requests = await listChannelPairingRequests(channel, process.env, accountId);
-    sendJson(res, 200, { ok: true, channel, accountId: accountId ?? null, requests });
-    return;
-  }
-
   if (req.method === "GET" && subPath === "/allow") {
     const channel = resolvePairingChannel(url.searchParams.get("channel"));
     const allowFrom = await readChannelAllowFromStore(channel, process.env, accountId);
@@ -656,28 +591,14 @@ async function handleApiRequest(
     return;
   }
 
-  if (req.method === "POST" && subPath === "/approve") {
-    const body = await readJsonBody(req);
-    const channel = resolvePairingChannel(body.channel);
-    const code = requireTextField(body, "code");
-    const bodyAccountId = normalizeOptionalText(body.accountId);
-    const approved = await approveChannelPairingCode({
-      channel,
-      code,
-      accountId: bodyAccountId,
-    });
-    if (!approved) {
-      sendJson(res, 404, { ok: false, error: "No pending pairing request found for that code" });
-      return;
-    }
-    sendJson(res, 200, { ok: true, channel, approved });
-    return;
-  }
-
   if (req.method === "POST" && subPath === "/add") {
     const body = await readJsonBody(req);
     const channel = resolvePairingChannel(body.channel);
     const id = requireTextField(body, "id");
+    if (id === "*") {
+      sendJson(res, 400, { ok: false, error: "Wildcard entries are disabled for manual-only mode" });
+      return;
+    }
     const bodyAccountId = normalizeOptionalText(body.accountId);
     const result = await addChannelAllowFromStoreEntry({
       channel,
