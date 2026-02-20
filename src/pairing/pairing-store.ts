@@ -587,3 +587,50 @@ export async function approveChannelPairingCode(params: {
     },
   );
 }
+
+export async function rejectChannelPairingCode(params: {
+  channel: PairingChannel;
+  code: string;
+  accountId?: string;
+  env?: NodeJS.ProcessEnv;
+}): Promise<{ id: string; entry?: PairingRequest } | null> {
+  const env = params.env ?? process.env;
+  const code = params.code.trim().toUpperCase();
+  if (!code) {
+    return null;
+  }
+
+  const filePath = resolvePairingPath(params.channel, env);
+  return await withFileLock(
+    filePath,
+    { version: 1, requests: [] } satisfies PairingStore,
+    async () => {
+      const { requests: pruned, removed } = await readPrunedPairingRequests(filePath);
+      const normalizedAccountId = normalizePairingAccountId(params.accountId);
+      const idx = pruned.findIndex((r) => {
+        if (String(r.code ?? "").toUpperCase() !== code) {
+          return false;
+        }
+        return requestMatchesAccountId(r, normalizedAccountId);
+      });
+      if (idx < 0) {
+        if (removed) {
+          await writeJsonFile(filePath, {
+            version: 1,
+            requests: pruned,
+          } satisfies PairingStore);
+        }
+        return null;
+      }
+      const [entry] = pruned.splice(idx, 1);
+      await writeJsonFile(filePath, {
+        version: 1,
+        requests: pruned,
+      } satisfies PairingStore);
+      if (!entry) {
+        return null;
+      }
+      return { id: entry.id, entry };
+    },
+  );
+}

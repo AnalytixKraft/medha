@@ -8,6 +8,7 @@ import { captureEnv } from "../test-utils/env.js";
 import {
   addChannelAllowFromStoreEntry,
   approveChannelPairingCode,
+  rejectChannelPairingCode,
   listChannelPairingRequests,
   readChannelAllowFromStore,
   upsertChannelPairingRequest,
@@ -186,6 +187,28 @@ describe("pairing store", () => {
       const channelScoped = await readChannelAllowFromStore("telegram");
       expect(accountScoped).toContain("12345");
       expect(channelScoped).not.toContain("12345");
+    });
+  });
+
+  it("rejects pairing code without adding allowFrom", async () => {
+    await withTempStateDir(async () => {
+      const created = await upsertChannelPairingRequest({
+        channel: "telegram",
+        id: "67890",
+      });
+      expect(created.created).toBe(true);
+
+      const rejected = await rejectChannelPairingCode({
+        channel: "telegram",
+        code: created.code,
+      });
+      expect(rejected?.id).toBe("67890");
+
+      const pending = await listChannelPairingRequests("telegram");
+      expect(pending).toHaveLength(0);
+
+      const allowFrom = await readChannelAllowFromStore("telegram");
+      expect(allowFrom).not.toContain("67890");
     });
   });
 

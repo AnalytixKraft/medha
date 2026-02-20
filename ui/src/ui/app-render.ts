@@ -43,6 +43,14 @@ import {
 } from "./controllers/exec-approvals.ts";
 import { loadLogs } from "./controllers/logs.ts";
 import { loadNodes } from "./controllers/nodes.ts";
+import {
+  addPairingContact,
+  approvePairingCode,
+  loadPairing,
+  rejectPairingCode,
+  refreshPairing,
+  revokePairingContact,
+} from "./controllers/pairing.ts";
 import { loadPresence } from "./controllers/presence.ts";
 import { deleteSessionAndRefresh, loadSessions, patchSession } from "./controllers/sessions.ts";
 import {
@@ -66,6 +74,7 @@ import { renderInstances } from "./views/instances.ts";
 import { renderLogs } from "./views/logs.ts";
 import { renderNodes } from "./views/nodes.ts";
 import { renderOverview } from "./views/overview.ts";
+import { renderPairing } from "./views/pairing.ts";
 import { renderSessions } from "./views/sessions.ts";
 import { renderSkills } from "./views/skills.ts";
 
@@ -101,10 +110,6 @@ export function renderApp(state: AppViewState) {
   const configValue =
     state.configForm ?? (state.configSnapshot?.config as Record<string, unknown> | null);
   const basePath = normalizeBasePath(state.basePath ?? "");
-  const pairingContactBaseHref = basePath ? `${basePath}/pairing-contact` : "/pairing-contact";
-  const pairingContactHref = state.settings.token.trim()
-    ? `${pairingContactBaseHref}#token=${encodeURIComponent(state.settings.token.trim())}`
-    : pairingContactBaseHref;
   const resolvedAgentId =
     state.agentsSelectedId ??
     state.agentsList?.defaultId ??
@@ -171,14 +176,6 @@ export function renderApp(state: AppViewState) {
             <span class="nav-label__text">${t("common.resources")}</span>
           </div>
           <div class="nav-group__items">
-            <a
-              class="nav-item nav-item--external"
-              href=${pairingContactHref}
-              title=${t("common.pairContact")}
-            >
-              <span class="nav-item__icon" aria-hidden="true">${icons.link}</span>
-              <span class="nav-item__text">${t("common.pairContact")}</span>
-            </a>
             <a
               class="nav-item nav-item--external"
               href="https://docs.openclaw.ai"
@@ -889,6 +886,35 @@ export function renderApp(state: AppViewState) {
                 onSplitRatioChange: (ratio: number) => state.handleSplitRatioChange(ratio),
                 assistantName: state.assistantName,
                 assistantAvatar: state.assistantAvatar,
+              })
+            : nothing
+        }
+
+        ${
+          state.tab === "pairing"
+            ? renderPairing({
+                loading: state.pairingLoading,
+                busy: state.pairingBusy,
+                channels: state.pairingChannels,
+                channel: state.pairingChannel,
+                accountId: state.pairingAccountId,
+                contactId: state.pairingContactId,
+                pending: state.pairingPending,
+                allowlist: state.pairingAllowlist,
+                error: state.pairingError,
+                status: state.pairingStatus,
+                statusTone: state.pairingStatusTone,
+                onRefresh: () => loadPairing(state),
+                onChannelChange: (next) => {
+                  state.pairingChannel = next;
+                  void refreshPairing(state);
+                },
+                onAccountIdChange: (next) => (state.pairingAccountId = next),
+                onContactIdChange: (next) => (state.pairingContactId = next),
+                onAddContact: () => addPairingContact(state, state.pairingContactId),
+                onApprove: (code, channel) => approvePairingCode(state, code, channel),
+                onReject: (code, channel) => rejectPairingCode(state, code, channel),
+                onRevoke: (id, channel) => revokePairingContact(state, id, channel),
               })
             : nothing
         }

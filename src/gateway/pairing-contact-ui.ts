@@ -3,6 +3,7 @@ import { listPairingChannels, resolvePairingChannel } from "../channels/plugins/
 import {
   addChannelAllowFromStoreEntry,
   approveChannelPairingCode,
+  rejectChannelPairingCode,
   listChannelPairingRequests,
   readChannelAllowFromStore,
   removeChannelAllowFromStoreEntry,
@@ -505,12 +506,32 @@ async function loadPending() {
         setStatus(String(err instanceof Error ? err.message : err), "err");
       }
     });
+    const revokeBtn = document.createElement("button");
+    revokeBtn.className = "inline secondary";
+    revokeBtn.textContent = "Revoke";
+    revokeBtn.addEventListener("click", async () => {
+      try {
+        await apiRequest("/reject", {
+          method: "POST",
+          body: { channel, accountId, code: String(req.code || "") },
+        });
+        setStatus("Revoked code " + String(req.code || ""), "ok");
+        await refreshAll();
+      } catch (err) {
+        setStatus(String(err instanceof Error ? err.message : err), "err");
+      }
+    });
+    const actions = document.createElement("div");
+    actions.style.display = "inline-flex";
+    actions.style.gap = "8px";
+    actions.appendChild(approveBtn);
+    actions.appendChild(revokeBtn);
     pendingBody.appendChild(
       row([
         String(req.code || ""),
         String(req.id || ""),
         String(req.createdAt || ""),
-        approveBtn,
+        actions,
       ]),
     );
   }
@@ -671,6 +692,24 @@ async function handleApiRequest(
       return;
     }
     sendJson(res, 200, { ok: true, channel, approved });
+    return;
+  }
+
+  if (req.method === "POST" && subPath === "/reject") {
+    const body = await readJsonBody(req);
+    const channel = resolvePairingChannel(body.channel);
+    const code = requireTextField(body, "code");
+    const bodyAccountId = normalizeOptionalText(body.accountId);
+    const rejected = await rejectChannelPairingCode({
+      channel,
+      code,
+      accountId: bodyAccountId,
+    });
+    if (!rejected) {
+      sendJson(res, 404, { ok: false, error: "No pending pairing request found for that code" });
+      return;
+    }
+    sendJson(res, 200, { ok: true, channel, rejected, changed: true });
     return;
   }
 
