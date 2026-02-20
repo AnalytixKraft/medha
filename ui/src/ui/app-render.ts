@@ -113,8 +113,15 @@ export function renderApp(state: AppViewState) {
 
   return html`
     <div class="shell ${isChat ? "shell--chat" : ""} ${chatFocus ? "shell--chat-focus" : ""} ${state.settings.navCollapsed ? "shell--nav-collapsed" : ""} ${state.onboarding ? "shell--onboarding" : ""}">
-      <header class="topbar">
-        <div class="topbar-left">
+      <aside class="nav ${state.settings.navCollapsed ? "nav--collapsed" : ""}">
+        <div class="nav-head">
+          <div class="brand">
+            <img
+              class="brand-logo brand-logo--medha"
+              src=${basePath ? `${basePath}/logo/Medha.png?v=20260220` : "/logo/Medha.png?v=20260220"}
+              alt="Medha logo"
+            />
+          </div>
           <button
             class="nav-collapse-toggle"
             @click=${() =>
@@ -127,28 +134,14 @@ export function renderApp(state: AppViewState) {
           >
             <span class="nav-collapse-toggle__icon">${icons.menu}</span>
           </button>
-          <div class="brand">
-            <div class="brand-logo">
-              <img src=${basePath ? `${basePath}/favicon.svg` : "/favicon.svg"} alt="OpenClaw" />
-            </div>
-            <div class="brand-text">
-              <div class="brand-title">OPENCLAW</div>
-              <div class="brand-sub">Gateway Dashboard</div>
-            </div>
-          </div>
         </div>
-        <div class="topbar-status">
-          <div class="pill">
-            <span class="statusDot ${state.connected ? "ok" : ""}"></span>
-            <span>${t("common.health")}</span>
-            <span class="mono">${state.connected ? t("common.ok") : t("common.offline")}</span>
-          </div>
-          ${renderThemeToggle(state)}
+        <div class="nav-presence">
+          <span class="statusDot ${state.connected ? "ok" : ""}"></span>
+          <span class="nav-presence__label">${state.connected ? "Live gateway link" : "Gateway offline"}</span>
         </div>
-      </header>
-      <aside class="nav ${state.settings.navCollapsed ? "nav--collapsed" : ""}">
         ${TAB_GROUPS.map((group) => {
-          const isGroupCollapsed = state.settings.navGroupsCollapsed[group.label] ?? false;
+          const groupKey = group.key;
+          const isGroupCollapsed = state.settings.navGroupsCollapsed[groupKey] ?? false;
           const hasActiveTab = group.tabs.some((tab) => tab === state.tab);
           return html`
             <div class="nav-group ${isGroupCollapsed && !hasActiveTab ? "nav-group--collapsed" : ""}">
@@ -156,7 +149,7 @@ export function renderApp(state: AppViewState) {
                 class="nav-label"
                 @click=${() => {
                   const next = { ...state.settings.navGroupsCollapsed };
-                  next[group.label] = !isGroupCollapsed;
+                  next[groupKey] = !isGroupCollapsed;
                   state.applySettings({
                     ...state.settings,
                     navGroupsCollapsed: next,
@@ -164,7 +157,7 @@ export function renderApp(state: AppViewState) {
                 }}
                 aria-expanded=${!isGroupCollapsed}
               >
-                <span class="nav-label__text">${t(`nav.${group.label}`)}</span>
+                <span class="nav-label__text">${t(`nav.${groupKey}`)}</span>
                 <span class="nav-label__chevron">${isGroupCollapsed ? "+" : "−"}</span>
               </button>
               <div class="nav-group__items">
@@ -173,7 +166,7 @@ export function renderApp(state: AppViewState) {
             </div>
           `;
         })}
-        <div class="nav-group nav-group--links">
+        <div class="nav-group nav-group--links nav-group--footer">
           <div class="nav-label nav-label--static">
             <span class="nav-label__text">${t("common.resources")}</span>
           </div>
@@ -199,17 +192,43 @@ export function renderApp(state: AppViewState) {
           </div>
         </div>
       </aside>
-      <main class="content ${isChat ? "content--chat" : ""}">
-        <section class="content-header">
-          <div>
-            ${state.tab === "usage" ? nothing : html`<div class="page-title">${titleForTab(state.tab)}</div>`}
-            ${state.tab === "usage" ? nothing : html`<div class="page-sub">${subtitleForTab(state.tab)}</div>`}
+      <div class="workspace ${isChat ? "workspace--chat" : ""}">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button
+              class="nav-collapse-toggle"
+              @click=${() =>
+                state.applySettings({
+                  ...state.settings,
+                  navCollapsed: !state.settings.navCollapsed,
+                })}
+              title="${state.settings.navCollapsed ? t("nav.expand") : t("nav.collapse")}"
+              aria-label="${state.settings.navCollapsed ? t("nav.expand") : t("nav.collapse")}"
+            >
+              <span class="nav-collapse-toggle__icon">${icons.menu}</span>
+            </button>
+            <div>
+              ${state.tab === "usage" ? nothing : html`<div class="page-title">${titleForTab(state.tab)}</div>`}
+              ${state.tab === "usage" ? nothing : html`<div class="page-sub">${subtitleForTab(state.tab)}</div>`}
+            </div>
           </div>
-          <div class="page-meta">
+          <div class="topbar-status">
+            <div class="pill">
+              <span class="statusDot ${state.connected ? "ok" : ""}"></span>
+              <span>${t("common.health")}</span>
+              <span class="mono">${state.connected ? t("common.ok") : t("common.offline")}</span>
+            </div>
+            ${renderThemeToggle(state)}
+          </div>
+        </header>
+        <main class="content ${isChat ? "content--chat" : ""}">
+          <section class="content-header">
+            <div class="page-kicker">Workspace</div>
+            <div class="page-meta">
             ${state.lastError ? html`<div class="pill danger">${state.lastError}</div>` : nothing}
             ${isChat ? renderChatControls(state) : nothing}
-          </div>
-        </section>
+            </div>
+          </section>
 
         ${
           state.tab === "overview"
@@ -957,7 +976,8 @@ export function renderApp(state: AppViewState) {
               })
             : nothing
         }
-      </main>
+        </main>
+      </div>
       ${renderExecApprovalPrompt(state)}
       ${renderGatewayUrlConfirmation(state)}
     </div>

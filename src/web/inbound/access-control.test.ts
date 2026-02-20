@@ -30,8 +30,8 @@ function expectSilentlyBlocked(result: { allowed: boolean }) {
   expect(sendMessageMock).not.toHaveBeenCalled();
 }
 
-describe("checkInboundAccessControl pairing grace", () => {
-  async function runPairingGraceCase(messageTimestampMs: number) {
+describe("checkInboundAccessControl manual allowlist mode", () => {
+  async function runUnauthorizedDmCase(messageTimestampMs: number) {
     const connectedAtMs = 1_000_000;
     return await checkInboundAccessControl({
       accountId: "default",
@@ -49,20 +49,20 @@ describe("checkInboundAccessControl pairing grace", () => {
     });
   }
 
-  it("suppresses pairing replies for historical DMs on connect", async () => {
-    const result = await runPairingGraceCase(1_000_000 - 31_000);
+  it("silently blocks historical DMs from unknown senders", async () => {
+    const result = await runUnauthorizedDmCase(1_000_000 - 31_000);
 
     expect(result.allowed).toBe(false);
     expect(upsertPairingRequestMock).not.toHaveBeenCalled();
     expect(sendMessageMock).not.toHaveBeenCalled();
   });
 
-  it("sends pairing replies for live DMs", async () => {
-    const result = await runPairingGraceCase(1_000_000 - 10_000);
+  it("silently blocks live DMs from unknown senders", async () => {
+    const result = await runUnauthorizedDmCase(1_000_000 - 10_000);
 
     expect(result.allowed).toBe(false);
-    expect(upsertPairingRequestMock).toHaveBeenCalled();
-    expect(sendMessageMock).toHaveBeenCalled();
+    expect(upsertPairingRequestMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).not.toHaveBeenCalled();
   });
 });
 

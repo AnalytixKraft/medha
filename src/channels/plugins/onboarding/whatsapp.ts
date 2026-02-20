@@ -106,7 +106,7 @@ async function promptWhatsAppAllowFrom(
   prompter: WizardPrompter,
   options?: { forceAllowlist?: boolean },
 ): Promise<MedhaConfig> {
-  const existingPolicy = cfg.channels?.whatsapp?.dmPolicy ?? "pairing";
+  const existingPolicy = cfg.channels?.whatsapp?.dmPolicy ?? "allowlist";
   const existingAllowFrom = cfg.channels?.whatsapp?.allowFrom ?? [];
   const existingLabel = existingAllowFrom.length > 0 ? existingAllowFrom.join(", ") : "unset";
 
@@ -123,8 +123,8 @@ async function promptWhatsAppAllowFrom(
   await prompter.note(
     [
       "WhatsApp direct chats are gated by `channels.whatsapp.dmPolicy` + `channels.whatsapp.allowFrom`.",
-      "- pairing (default): unknown senders get a pairing code; owner approves",
-      "- allowlist: unknown senders are blocked",
+      "- allowlist (default): unknown senders are blocked",
+      "- pairing (legacy): treated as allowlist (no auto-pairing reply)",
       '- open: public inbound DMs (requires allowFrom to include "*")',
       "- disabled: ignore WhatsApp DMs",
       "",
@@ -155,15 +155,16 @@ async function promptWhatsAppAllowFrom(
     });
   }
 
-  const policy = (await prompter.select({
+  const selectedPolicy = (await prompter.select({
     message: "WhatsApp DM policy",
     options: [
-      { value: "pairing", label: "Pairing (recommended)" },
-      { value: "allowlist", label: "Allowlist only (block unknown senders)" },
+      { value: "allowlist", label: "Allowlist (recommended)" },
+      { value: "pairing", label: "Pairing (legacy alias for allowlist)" },
       { value: "open", label: "Open (public inbound DMs)" },
       { value: "disabled", label: "Disabled (ignore WhatsApp DMs)" },
     ],
   })) as DmPolicy;
+  const policy = selectedPolicy === "pairing" ? "allowlist" : selectedPolicy;
 
   let next = setWhatsAppSelfChatMode(cfg, false);
   next = setWhatsAppDmPolicy(next, policy);
