@@ -4,6 +4,13 @@ import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
 import type {
+  EmailAccountSummary,
+  EmailDraftPreview,
+  EmailMessage,
+  EmailMessageMeta,
+  EmailPendingDraft,
+} from "./controllers/email.ts";
+import type {
   PairingAllowEntry,
   PairingStatusTone,
 } from "./controllers/pairing.ts";
@@ -90,6 +97,50 @@ export type AppViewState = {
   pairingAccountId: string;
   pairingContactId: string;
   pairingAllowlist: PairingAllowEntry[];
+  emailLoading: boolean;
+  emailBusy: boolean;
+  emailError: string | null;
+  emailStatus: string | null;
+  emailAccounts: EmailAccountSummary[];
+  emailSelectedAccountId: string;
+  emailQuery: string;
+  emailMessages: EmailMessageMeta[];
+  emailMessageLoading: boolean;
+  emailSelectedMessage: EmailMessage | null;
+  emailPendingDraft: EmailDraftPreview | null;
+  emailConfirmCode: string;
+  emailDrafts: EmailPendingDraft[];
+  emailGoogleClientId: string;
+  emailGoogleClientSecret: string;
+  emailMicrosoftClientId: string;
+  emailMicrosoftClientSecret: string;
+  emailImapSmtpForm: {
+    preset: string;
+    address: string;
+    displayName: string;
+    allowPasswordAuth: boolean;
+    protonBridgeHintAccepted: boolean;
+    testRead: boolean;
+    testSend: boolean;
+    imapHost: string;
+    imapPort: string;
+    imapSecure: boolean;
+    imapUsername: string;
+    imapPassword: string;
+    imapOauth2Token: string;
+    smtpHost: string;
+    smtpPort: string;
+    smtpSecure: boolean;
+    smtpUsername: string;
+    smtpPassword: string;
+    smtpOauth2Token: string;
+    smtpRejectUnauthorized: boolean;
+  };
+  emailComposeTo: string;
+  emailComposeCc: string;
+  emailComposeBcc: string;
+  emailComposeSubject: string;
+  emailComposeBodyText: string;
   execApprovalsLoading: boolean;
   execApprovalsSaving: boolean;
   execApprovalsDirty: boolean;

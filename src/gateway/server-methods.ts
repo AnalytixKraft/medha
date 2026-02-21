@@ -8,6 +8,7 @@ import { configHandlers } from "./server-methods/config.js";
 import { connectHandlers } from "./server-methods/connect.js";
 import { cronHandlers } from "./server-methods/cron.js";
 import { deviceHandlers } from "./server-methods/devices.js";
+import { emailHandlers } from "./server-methods/email.js";
 import { execApprovalsHandlers } from "./server-methods/exec-approvals.js";
 import { healthHandlers } from "./server-methods/health.js";
 import { logsHandlers } from "./server-methods/logs.js";
@@ -80,6 +81,10 @@ const READ_METHODS = new Set([
   "chat.history",
   "config.get",
   "talk.config",
+  "email.accounts.list",
+  "email.messages.search",
+  "email.messages.get",
+  "email.drafts.list",
 ]);
 const WRITE_METHODS = new Set([
   "send",
@@ -97,6 +102,12 @@ const WRITE_METHODS = new Set([
   "chat.abort",
   "browser.request",
   "push.test",
+  "email.accounts.connect.google",
+  "email.accounts.connect.microsoft",
+  "email.accounts.connect.imapSmtp",
+  "email.accounts.remove",
+  "email.send.draft",
+  "email.send.confirm",
 ]);
 
 function authorizeGatewayMethod(method: string, client: GatewayRequestOptions["client"]) {
@@ -180,6 +191,7 @@ export const coreGatewayHandlers: GatewayRequestHandlers = {
   ...chatHandlers,
   ...cronHandlers,
   ...deviceHandlers,
+  ...emailHandlers,
   ...execApprovalsHandlers,
   ...webHandlers,
   ...modelsHandlers,

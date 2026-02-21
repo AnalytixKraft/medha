@@ -91,6 +91,16 @@ const BASE_METHODS = [
   "chat.history",
   "chat.abort",
   "chat.send",
+  "email.accounts.list",
+  "email.accounts.remove",
+  "email.accounts.connect.google",
+  "email.accounts.connect.microsoft",
+  "email.accounts.connect.imapSmtp",
+  "email.messages.search",
+  "email.messages.get",
+  "email.send.draft",
+  "email.send.confirm",
+  "email.drafts.list",
 ];
 
 export function listGatewayMethods(): string[] {

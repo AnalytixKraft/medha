@@ -58,6 +58,12 @@ export const icons = {
       <circle cx="12" cy="12" r="3" />
     </svg>
   `,
+  mail: html`
+    <svg viewBox="0 0 24 24">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="m22 7-10 6L2 7" />
+    </svg>
+  `,
   bug: html`
     <svg viewBox="0 0 24 24">
       <path d="m8 2 1.88 1.88" />

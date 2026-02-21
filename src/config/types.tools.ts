@@ -376,6 +376,37 @@ export type MemorySearchConfig = {
   };
 };
 
+export type ToolsEmailConfig = {
+  /** Enable send_email tool (default: true). */
+  enabled?: boolean;
+  /** Delivery provider mode. */
+  provider?: "smtp";
+  smtp?: {
+    /** SMTP host (for example smtp.gmail.com). */
+    host?: string;
+    /** SMTP port (for example 465 for SMTPS, 25 for local relay). */
+    port?: number;
+    /** Connect with implicit TLS (SMTPS). */
+    secure?: boolean;
+    /** SMTP username (optional for local relays). */
+    username?: string;
+    /** SMTP password or app password. */
+    password?: string;
+    /** Verify server TLS certificate (default: true). */
+    rejectUnauthorized?: boolean;
+  };
+  from?: {
+    /** Sender email address used in From header and MAIL FROM. */
+    address?: string;
+    /** Optional sender display name. */
+    name?: string;
+    /** Optional default Reply-To email address. */
+    replyTo?: string;
+  };
+  /** SMTP timeout in seconds (default: 20). */
+  timeoutSeconds?: number;
+};
+
 export type ToolsConfig = {
   /** Base tool profile applied before allow/deny lists. */
   profile?: ToolProfileId;
@@ -489,6 +520,8 @@ export type ToolsConfig = {
       enabled?: boolean;
     };
   };
+  /** Email tool configuration (SMTP outbound). */
+  email?: ToolsEmailConfig;
   agentToAgent?: {
     /** Enable agent-to-agent messaging tools. Default: false. */
     enabled?: boolean;

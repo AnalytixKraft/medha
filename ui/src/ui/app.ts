@@ -56,6 +56,13 @@ import type { DevicePairingList } from "./controllers/devices.ts";
 import type { ExecApprovalRequest } from "./controllers/exec-approval.ts";
 import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exec-approvals.ts";
 import type {
+  EmailAccountSummary,
+  EmailDraftPreview,
+  EmailMessage,
+  EmailMessageMeta,
+  EmailPendingDraft,
+} from "./controllers/email.ts";
+import type {
   PairingAllowEntry,
   PairingStatusTone,
 } from "./controllers/pairing.ts";
@@ -93,6 +100,28 @@ declare global {
 }
 
 const bootAssistantIdentity = normalizeAssistantIdentity({});
+const defaultEmailImapSmtpForm = () => ({
+  preset: "custom",
+  address: "",
+  displayName: "",
+  allowPasswordAuth: false,
+  protonBridgeHintAccepted: false,
+  testRead: true,
+  testSend: false,
+  imapHost: "",
+  imapPort: "993",
+  imapSecure: true,
+  imapUsername: "",
+  imapPassword: "",
+  imapOauth2Token: "",
+  smtpHost: "",
+  smtpPort: "465",
+  smtpSecure: true,
+  smtpUsername: "",
+  smtpPassword: "",
+  smtpOauth2Token: "",
+  smtpRejectUnauthorized: true,
+});
 
 function resolveOnboardingMode(): boolean {
   if (!window.location.search) {
@@ -170,6 +199,29 @@ export class OpenClawApp extends LitElement {
   @state() pairingAccountId = "";
   @state() pairingContactId = "";
   @state() pairingAllowlist: PairingAllowEntry[] = [];
+  @state() emailLoading = false;
+  @state() emailBusy = false;
+  @state() emailError: string | null = null;
+  @state() emailStatus: string | null = null;
+  @state() emailAccounts: EmailAccountSummary[] = [];
+  @state() emailSelectedAccountId = "";
+  @state() emailQuery = "";
+  @state() emailMessages: EmailMessageMeta[] = [];
+  @state() emailMessageLoading = false;
+  @state() emailSelectedMessage: EmailMessage | null = null;
+  @state() emailPendingDraft: EmailDraftPreview | null = null;
+  @state() emailConfirmCode = "";
+  @state() emailDrafts: EmailPendingDraft[] = [];
+  @state() emailGoogleClientId = "";
+  @state() emailGoogleClientSecret = "";
+  @state() emailMicrosoftClientId = "";
+  @state() emailMicrosoftClientSecret = "";
+  @state() emailImapSmtpForm = defaultEmailImapSmtpForm();
+  @state() emailComposeTo = "";
+  @state() emailComposeCc = "";
+  @state() emailComposeBcc = "";
+  @state() emailComposeSubject = "";
+  @state() emailComposeBodyText = "";
   @state() execApprovalsLoading = false;
   @state() execApprovalsSaving = false;
   @state() execApprovalsDirty = false;

@@ -103,6 +103,24 @@ export const FIELD_HELP: Record<string, string> = {
   "tools.message.crossContext.marker.suffix":
     'Text suffix for cross-context markers (supports "{channel}").',
   "tools.message.broadcast.enabled": "Enable broadcast action (default: true).",
+  "tools.email": "Outbound email settings for the send_email tool.",
+  "tools.email.provider": 'Email provider mode. Only "smtp" is supported.',
+  "tools.email.smtp": "SMTP relay settings used by send_email.",
+  "tools.email.from": "Default sender identity for outbound emails.",
+  "tools.email.enabled": "Enable send_email tool (default: true).",
+  "tools.email.smtp.host": "SMTP host (for example smtp.gmail.com).",
+  "tools.email.smtp.port": "SMTP port (default: 465 when secure=true, else 25).",
+  "tools.email.smtp.secure":
+    "Use implicit TLS for SMTP (SMTPS). Recommended true for hosted providers.",
+  "tools.email.smtp.username": "SMTP username (optional for local relays).",
+  "tools.email.smtp.password":
+    "SMTP password or app password. Marked sensitive and redacted in snapshots.",
+  "tools.email.smtp.rejectUnauthorized":
+    "Verify SMTP TLS certificates (default: true; set false only for trusted self-signed relays).",
+  "tools.email.from.address": "From email address used for outbound mail.",
+  "tools.email.from.name": "Optional display name in From header.",
+  "tools.email.from.replyTo": "Optional default Reply-To address.",
+  "tools.email.timeoutSeconds": "SMTP timeout in seconds (default: 20).",
   "tools.web.search.enabled": "Enable the web_search tool (requires a provider API key).",
   "tools.web.search.provider": 'Search provider ("brave", "perplexity", "grok", or "openai").',
   "tools.web.search.apiKey": "Brave Search API key (fallback: BRAVE_API_KEY env var).",

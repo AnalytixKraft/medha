@@ -35,6 +35,7 @@ describe("iconForTab", () => {
     expect(iconForTab("skills")).toBe("zap");
     expect(iconForTab("nodes")).toBe("monitor");
     expect(iconForTab("pairing")).toBe("smartphone");
+    expect(iconForTab("email")).toBe("mail");
     expect(iconForTab("config")).toBe("settings");
     expect(iconForTab("debug")).toBe("bug");
     expect(iconForTab("logs")).toBe("scrollText");
@@ -60,6 +61,7 @@ describe("titleForTab", () => {
     expect(titleForTab("chat")).toBe("Chat");
     expect(titleForTab("overview")).toBe("Overview");
     expect(titleForTab("pairing")).toBe("Pairing");
+    expect(titleForTab("email")).toBe("Email");
     expect(titleForTab("cron")).toBe("Cron Jobs");
   });
 });
@@ -132,6 +134,7 @@ describe("tabFromPath", () => {
     expect(tabFromPath("/chat")).toBe("chat");
     expect(tabFromPath("/overview")).toBe("overview");
     expect(tabFromPath("/sessions")).toBe("sessions");
+    expect(tabFromPath("/email")).toBe("email");
   });
 
   it("returns chat for root path", () => {

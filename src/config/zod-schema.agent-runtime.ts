@@ -283,6 +283,34 @@ export const ToolsWebSchema = z
   .strict()
   .optional();
 
+export const ToolsEmailSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    provider: z.literal("smtp").optional(),
+    smtp: z
+      .object({
+        host: z.string().optional(),
+        port: z.number().int().positive().optional(),
+        secure: z.boolean().optional(),
+        username: z.string().optional(),
+        password: z.string().optional().register(sensitive),
+        rejectUnauthorized: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
+    from: z
+      .object({
+        address: z.string().optional(),
+        name: z.string().optional(),
+        replyTo: z.string().optional(),
+      })
+      .strict()
+      .optional(),
+    timeoutSeconds: z.number().int().positive().optional(),
+  })
+  .strict()
+  .optional();
+
 export const ToolProfileSchema = z
   .union([z.literal("minimal"), z.literal("coding"), z.literal("messaging"), z.literal("full")])
   .optional();
@@ -635,6 +663,7 @@ export const ToolsSchema = z
     deny: z.array(z.string()).optional(),
     byProvider: z.record(z.string(), ToolPolicyWithProfileSchema).optional(),
     web: ToolsWebSchema,
+    email: ToolsEmailSchema,
     media: ToolsMediaSchema,
     links: ToolsLinksSchema,
     sessions: z

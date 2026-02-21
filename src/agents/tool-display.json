@@ -237,6 +237,11 @@
         "ban": { "label": "ban", "detailKeys": ["provider", "guildId", "userId"] }
       }
     },
+    "send_email": {
+      "emoji": "📧",
+      "title": "Email",
+      "detailKeys": ["action", "accountId", "to", "subject", "query", "messageId"]
+    },
     "agents_list": {
       "emoji": "🧭",
       "title": "Agents",

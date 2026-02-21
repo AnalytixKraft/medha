@@ -41,6 +41,17 @@ import {
   saveExecApprovals,
   updateExecApprovalsFormValue,
 } from "./controllers/exec-approvals.ts";
+import {
+  connectGoogleEmail,
+  connectImapSmtpEmail,
+  connectMicrosoftEmail,
+  confirmEmailDraft,
+  draftEmailSend,
+  loadEmailAccounts,
+  openEmailMessage,
+  removeEmailAccount,
+  searchEmailMessages,
+} from "./controllers/email.ts";
 import { loadLogs } from "./controllers/logs.ts";
 import { loadNodes } from "./controllers/nodes.ts";
 import {
@@ -66,6 +77,7 @@ import { renderChat } from "./views/chat.ts";
 import { renderConfig } from "./views/config.ts";
 import { renderCron } from "./views/cron.ts";
 import { renderDebug } from "./views/debug.ts";
+import { renderEmailSettings } from "./views/email-settings.ts";
 import { renderExecApprovalPrompt } from "./views/exec-approval.ts";
 import { renderGatewayUrlConfirmation } from "./views/gateway-url-confirmation.ts";
 import { renderInstances } from "./views/instances.ts";
@@ -910,6 +922,102 @@ export function renderApp(state: AppViewState) {
                 onContactIdChange: (next) => (state.pairingContactId = next),
                 onAddContact: () => addPairingContact(state, state.pairingContactId),
                 onRevoke: (id, channel) => revokePairingContact(state, id, channel),
+              })
+            : nothing
+        }
+
+        ${
+          state.tab === "email"
+            ? renderEmailSettings({
+                loading: state.emailLoading,
+                busy: state.emailBusy,
+                messageLoading: state.emailMessageLoading,
+                error: state.emailError,
+                status: state.emailStatus,
+                accounts: state.emailAccounts,
+                selectedAccountId: state.emailSelectedAccountId,
+                query: state.emailQuery,
+                messages: state.emailMessages,
+                selectedMessage: state.emailSelectedMessage,
+                pendingDraft: state.emailPendingDraft,
+                confirmCode: state.emailConfirmCode,
+                drafts: state.emailDrafts,
+                googleClientId: state.emailGoogleClientId,
+                googleClientSecret: state.emailGoogleClientSecret,
+                microsoftClientId: state.emailMicrosoftClientId,
+                microsoftClientSecret: state.emailMicrosoftClientSecret,
+                imapSmtpForm: state.emailImapSmtpForm,
+                onRefresh: () => loadEmailAccounts(state),
+                onSelectAccount: (accountId) => {
+                  state.emailSelectedAccountId = accountId;
+                  state.emailMessages = [];
+                  state.emailSelectedMessage = null;
+                },
+                onRemoveAccount: (accountId) => removeEmailAccount(state, accountId),
+                onQueryChange: (value) => (state.emailQuery = value),
+                onSearch: () => searchEmailMessages(state),
+                onOpenMessage: (messageId) => openEmailMessage(state, messageId),
+                onGoogleClientIdChange: (value) => (state.emailGoogleClientId = value),
+                onGoogleClientSecretChange: (value) => (state.emailGoogleClientSecret = value),
+                onMicrosoftClientIdChange: (value) => (state.emailMicrosoftClientId = value),
+                onMicrosoftClientSecretChange: (value) => (state.emailMicrosoftClientSecret = value),
+                onConnectGoogle: () => connectGoogleEmail(state),
+                onConnectMicrosoft: () => connectMicrosoftEmail(state),
+                onImapSmtpFormChange: (patch) =>
+                  (state.emailImapSmtpForm = { ...state.emailImapSmtpForm, ...patch }),
+                onConnectImapSmtp: () =>
+                  connectImapSmtpEmail(state, {
+                    address: state.emailImapSmtpForm.address,
+                    displayName: state.emailImapSmtpForm.displayName || undefined,
+                    preset: state.emailImapSmtpForm.preset,
+                    allowPasswordAuth: state.emailImapSmtpForm.allowPasswordAuth,
+                    protonBridgeHintAccepted: state.emailImapSmtpForm.protonBridgeHintAccepted,
+                    testRead: state.emailImapSmtpForm.testRead,
+                    testSend: state.emailImapSmtpForm.testSend,
+                    imap: {
+                      host: state.emailImapSmtpForm.imapHost,
+                      port: Number.parseInt(state.emailImapSmtpForm.imapPort, 10),
+                      secure: state.emailImapSmtpForm.imapSecure,
+                      username: state.emailImapSmtpForm.imapUsername,
+                      password: state.emailImapSmtpForm.imapPassword || undefined,
+                      oauth2Token: state.emailImapSmtpForm.imapOauth2Token || undefined,
+                    },
+                    smtp: {
+                      host: state.emailImapSmtpForm.smtpHost,
+                      port: Number.parseInt(state.emailImapSmtpForm.smtpPort, 10),
+                      secure: state.emailImapSmtpForm.smtpSecure,
+                      username: state.emailImapSmtpForm.smtpUsername,
+                      password: state.emailImapSmtpForm.smtpPassword || undefined,
+                      oauth2Token: state.emailImapSmtpForm.smtpOauth2Token || undefined,
+                      rejectUnauthorized: state.emailImapSmtpForm.smtpRejectUnauthorized,
+                    },
+                  }),
+                onDraftCompose: () =>
+                  draftEmailSend(state, {
+                    to: state.emailComposeTo,
+                    cc: state.emailComposeCc,
+                    bcc: state.emailComposeBcc,
+                    subject: state.emailComposeSubject,
+                    bodyText: state.emailComposeBodyText,
+                  }),
+                onConfirmDraft: () => {
+                  const draftId = state.emailPendingDraft?.draftId;
+                  if (!draftId) {
+                    return;
+                  }
+                  void confirmEmailDraft(state, draftId, state.emailConfirmCode);
+                },
+                onConfirmCodeChange: (value) => (state.emailConfirmCode = value),
+                composeTo: state.emailComposeTo,
+                composeCc: state.emailComposeCc,
+                composeBcc: state.emailComposeBcc,
+                composeSubject: state.emailComposeSubject,
+                composeBodyText: state.emailComposeBodyText,
+                onComposeToChange: (value) => (state.emailComposeTo = value),
+                onComposeCcChange: (value) => (state.emailComposeCc = value),
+                onComposeBccChange: (value) => (state.emailComposeBcc = value),
+                onComposeSubjectChange: (value) => (state.emailComposeSubject = value),
+                onComposeBodyChange: (value) => (state.emailComposeBodyText = value),
               })
             : nothing
         }
